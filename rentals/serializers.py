@@ -54,6 +54,18 @@ class RentalSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({
                 'quantity': 'Requested quantity is not available.'
             })
+        
+        overlapping_rentals = Rental.objects.filter(
+            machine=data['machine'],
+            status__in=['PENDING', 'APPROVED', 'ACTIVE'],
+            start_date__lt=data['end_date'],
+            end_date__gt=data['start_date'],
+        )
+
+        if overlapping_rentals.exists():
+            raise serializers.ValidationError({
+                'machine': 'This machine is already booked for the selected dates.'
+            })
 
         return data
 
