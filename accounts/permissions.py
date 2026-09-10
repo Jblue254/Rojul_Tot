@@ -14,3 +14,7 @@ class IsManager(BasePermission):
 class IsEquipmentManager(BasePermission):
     def has_permission(self, request, view):
         return request.user.role == 'EQUIPMENT_MANAGER'
+
+class IsEquipmentManagerOrAdmin(BasePermission):
+    def has_permission(self, request, view):
+        return request.user.role in ['EQUIPMENT_MANAGER', 'ADMIN']

@@ -1,7 +1,8 @@
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from .models import Category, Machine, Maintenance
-from .serializers import CategorySerializer, MachineSerializer, MaintenanceSerializer, MaintenanceSerializer
+from .serializers import CategorySerializer, MachineSerializer, MaintenanceSerializer
+from accounts.permissions import IsEquipmentManagerOrAdmin
 
 
 class CategoryListCreateView(generics.ListCreateAPIView):
@@ -29,7 +30,7 @@ class MachineDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 class MaintenanceListCreateView(generics.ListCreateAPIView):
     serializer_class = MaintenanceSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsEquipmentManagerOrAdmin]
 
     def get_queryset(self):
         return Maintenance.objects.all()
@@ -37,7 +38,7 @@ class MaintenanceListCreateView(generics.ListCreateAPIView):
 
 class MaintenanceDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = MaintenanceSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsEquipmentManagerOrAdmin]
 
     def get_queryset(self):
-        return Maintenance.objects.all()    
+        return Maintenance.objects.all()
