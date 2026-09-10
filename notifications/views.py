@@ -1,6 +1,6 @@
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
-
+from accounts.permissions import IsManagerOrAdmin
 from .models import Notification
 from .serializers import NotificationSerializer
 
@@ -23,3 +23,7 @@ class NotificationDetailView(generics.RetrieveUpdateDestroyAPIView):
         return Notification.objects.filter(
             recipient=self.request.user
         )
+
+class NotificationCreateView(generics.CreateAPIView):
+    serializer_class = NotificationSerializer
+    permission_classes = [IsAuthenticated, IsManagerOrAdmin]
