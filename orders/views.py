@@ -55,20 +55,39 @@ class CartItemCreateView(generics.CreateAPIView):
         )
 
         drawing = serializer.validated_data['drawing']
+        quantity = serializer.validated_data['quantity']
 
-        cart_item, created = CartItem.objects.get_or_create(
+        cart_item, item_created = CartItem.objects.get_or_create(
             cart=cart,
             drawing=drawing
         )
 
-        if created:
-            cart_item.quantity = serializer.validated_data['quantity']
+        if item_created:
+            cart_item.quantity = quantity
         else:
-            cart_item.quantity += serializer.validated_data['quantity']
+            cart_item.quantity += quantity
 
         cart_item.save()
 
+        # Store the actual CartItem instance for the response
+        self.created_cart_item = cart_item
 
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        self.perform_create(serializer)
+
+        response_serializer = self.get_serializer(self.created_cart_item)
+
+        from rest_framework.response import Response
+        from rest_framework import status
+
+        return Response(
+            response_serializer.data,
+            status=status.HTTP_201_CREATED
+        )
+    
 class CartItemDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = CartItemSerializer
     permission_classes = [IsAuthenticated]

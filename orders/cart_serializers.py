@@ -1,8 +1,14 @@
 from rest_framework import serializers
+from drawings.models import Drawing
 from .models import Cart, CartItem
 
 
 class CartItemSerializer(serializers.ModelSerializer):
+    drawing = serializers.PrimaryKeyRelatedField(
+        queryset=Drawing.objects.all(),
+        required=False
+    )
+
     drawing_title = serializers.CharField(
         source='drawing.title',
         read_only=True
