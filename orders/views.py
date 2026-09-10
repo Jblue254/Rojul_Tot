@@ -1,8 +1,7 @@
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
-from .models import Order
 from .serializers import OrderSerializer
-from .models import Cart, CartItem
+from .models import Order, OrderItem, Cart, CartItem
 from .cart_serializers import CartSerializer, CartItemSerializer
 from drawings.models import Drawing
 
@@ -95,4 +94,59 @@ class CartItemDetailView(generics.RetrieveUpdateDestroyAPIView):
     def get_queryset(self):
         return CartItem.objects.filter(
             cart__customer=self.request.user
+        )
+
+class CartCheckoutView(generics.CreateAPIView):
+    serializer_class = OrderSerializer
+    permission_classes = [IsAuthenticated]
+
+    def create(self, request, *args, **kwargs):
+        from rest_framework.response import Response
+        from rest_framework import status
+
+        cart, created = Cart.objects.get_or_create(
+            customer=request.user
+        )
+
+        cart_items = cart.items.select_related('drawing').all()
+
+        if not cart_items.exists():
+            return Response(
+                {'detail': 'Your cart is empty.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        order = Order.objects.create(
+            customer=request.user
+        )
+
+        total_amount = 0
+
+        for cart_item in cart_items:
+            drawing = cart_item.drawing
+            quantity = cart_item.quantity
+
+            unit_price = drawing.price
+            subtotal = unit_price * quantity
+
+            OrderItem.objects.create(
+                order=order,
+                drawing=drawing,
+                quantity=quantity,
+                unit_price=unit_price,
+                subtotal=subtotal
+            )
+
+            total_amount += subtotal
+
+        order.total_amount = total_amount
+        order.save()
+
+        cart.items.all().delete()
+
+        serializer = self.get_serializer(order)
+
+        return Response(
+            serializer.data,
+            status=status.HTTP_201_CREATED
         )

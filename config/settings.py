@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'rentals',
     'drawings',
     'orders',
+    'projects',
 ]
 
 MIDDLEWARE = [
