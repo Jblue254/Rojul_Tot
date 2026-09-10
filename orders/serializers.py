@@ -84,3 +84,40 @@ class OrderSerializer(serializers.ModelSerializer):
         order.save()
 
         return order
+
+    def update(self, instance, validated_data):
+        items_data = validated_data.pop('items', None)
+
+        # Update normal Order fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+
+        instance.save()
+
+        # Update nested OrderItems
+        if items_data is not None:
+            instance.items.all().delete()
+
+            total_amount = 0
+
+            for item_data in items_data:
+                drawing = item_data['drawing']
+                quantity = item_data['quantity']
+
+                unit_price = drawing.price
+                subtotal = unit_price * quantity
+
+                OrderItem.objects.create(
+                    order=instance,
+                    drawing=drawing,
+                    quantity=quantity,
+                    unit_price=unit_price,
+                    subtotal=subtotal
+                )
+
+                total_amount += subtotal
+
+            instance.total_amount = total_amount
+            instance.save()
+
+        return instance
