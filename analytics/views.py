@@ -10,6 +10,7 @@ from orders.models import Order
 from projects.models import Project
 from reviews.models import Review
 from accounts.permissions import IsAdmin, IsManagerOrAdmin
+from accounts.models import User
 
 
 class DashboardStatisticsView(APIView):
@@ -85,6 +86,31 @@ class DashboardStatisticsView(APIView):
                     average=Avg("rating")
                 )["average"] or 0,
             },
+        }
+
+        return Response(data)
+
+class UserStatisticsView(APIView):
+    permission_classes = [IsAuthenticated, IsAdmin]
+
+    def get(self, request):
+        data = {
+            "total_users": User.objects.count(),
+            "customers": User.objects.filter(
+                role=User.Role.CUSTOMER
+            ).count(),
+            "managers": User.objects.filter(
+                role=User.Role.MANAGER
+            ).count(),
+            "equipment_managers": User.objects.filter(
+                role=User.Role.EQUIPMENT_MANAGER
+            ).count(),
+            "admins": User.objects.filter(
+                role=User.Role.ADMIN
+            ).count(),
+            "active_users": User.objects.filter(
+                is_active=True
+            ).count(),
         }
 
         return Response(data)
