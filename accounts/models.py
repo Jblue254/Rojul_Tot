@@ -38,9 +38,10 @@ class User(AbstractUser):
         CUSTOMER = 'CUSTOMER', 'Customer'
         STAFF = 'STAFF', 'Staff'
         EQUIPMENT_MANAGER = 'EQUIPMENT_MANAGER', 'Equipment Manager'
+        ARCHITECTURAL_MANAGER = 'ARCHITECTURAL_MANAGER', 'Architectural Manager'
         MANAGER = 'MANAGER', 'Manager'
         ADMIN = 'ADMIN', 'Admin'
-
+        
     username = None
     email = models.EmailField(unique=True)
     full_name = models.CharField(max_length=150)
