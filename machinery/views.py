@@ -42,3 +42,45 @@ class MaintenanceDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def get_queryset(self):
         return Maintenance.objects.all()
+
+def get_queryset(self):
+    queryset = Machine.objects.all()
+
+    search = self.request.query_params.get('search')
+    category = self.request.query_params.get('category')
+    status = self.request.query_params.get('status')
+    location = self.request.query_params.get('location')
+    min_price = self.request.query_params.get('min_price')
+    max_price = self.request.query_params.get('max_price')
+
+    if search:
+        queryset = queryset.filter(
+            name__icontains=search
+        )
+
+    if category:
+        queryset = queryset.filter(
+            category_id=category
+        )
+
+    if status:
+        queryset = queryset.filter(
+            status=status
+        )
+
+    if location:
+        queryset = queryset.filter(
+            location__icontains=location
+        )
+
+    if min_price:
+        queryset = queryset.filter(
+            price_per_day__gte=min_price
+        )
+
+    if max_price:
+        queryset = queryset.filter(
+            price_per_day__lte=max_price
+        )
+
+    return queryset
