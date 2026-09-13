@@ -1,6 +1,7 @@
 from rest_framework import generics
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.views import TokenObtainPairView
+from accounts.models import User
 from notifications.serializers import NotificationSerializer
 from .serializers import RegisterSerializer, UserSerializer
 from rest_framework.views import APIView
@@ -33,5 +34,14 @@ class ProfileView(generics.RetrieveUpdateAPIView):
     def get_object(self):
         return self.request.user
 
+class AdminUserListCreateView(generics.ListCreateAPIView):
+    queryset = User.objects.all().order_by('-created_at')
+    serializer_class = UserSerializer
+    permission_classes = [IsAdmin]
+
+class AdminUserDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [IsAdmin]
 
     
