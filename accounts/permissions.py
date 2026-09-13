@@ -22,3 +22,6 @@ class IsEquipmentManagerOrAdmin(BasePermission):
 class IsManagerOrAdmin(BasePermission):
     def has_permission(self, request, view):
         return request.user.role in ['MANAGER', 'ADMIN']
+class IsArchitecturalManagerOrAdmin(BasePermission):
+    def has_permission(self, request, view):
+        return request.user.role in ['ARCHITECTURAL_MANAGER','ADMIN']
