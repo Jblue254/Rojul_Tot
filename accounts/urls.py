@@ -4,7 +4,9 @@ from .views import (
     RegisterView,
     LoginView,
     ProfileView,
-    AdminOnlyView
+    AdminOnlyView,
+    AdminUserListCreateView,
+    AdminUserDetailView,
 )
 
 urlpatterns = [
@@ -12,5 +14,9 @@ urlpatterns = [
     path('login/', LoginView.as_view()),
     path('profile/', ProfileView.as_view()),
     path('admin-only/', AdminOnlyView.as_view()),
+
+    path('users/', AdminUserListCreateView.as_view(), name='admin-user-list'),
+    path('users/<int:pk>/', AdminUserDetailView.as_view(), name='admin-user-detail'),
+
 ]
 
