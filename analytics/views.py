@@ -3,7 +3,8 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from machinery.models import Machine
+
+from machinery.models import Machine, Maintenance
 from rentals.models import Rental
 from drawings.models import Drawing
 from orders.models import Order
@@ -206,6 +207,54 @@ class ProjectStatisticsView(APIView):
             ).count(),
             "total_budget": Project.objects.aggregate(
                 total=Sum("budget")
+            )["total"] or 0,
+        }
+
+        return Response(data)
+
+class AdminDashboardView(APIView):
+    permission_classes = [IsAuthenticated, IsAdmin]
+
+    def get(self, request):
+        data = {
+            "users": User.objects.count(),
+
+            "machinery": Machine.objects.count(),
+
+            "available_machinery": Machine.objects.filter(
+                status=Machine.Status.AVAILABLE
+            ).count(),
+
+            "active_rentals": Rental.objects.filter(
+                status=Rental.Status.ACTIVE
+            ).count(),
+
+            "drawings": Drawing.objects.count(),
+
+            "orders": Order.objects.count(),
+
+            "projects": Project.objects.count(),
+
+            "active_projects": Project.objects.filter(
+                status=Project.Status.ACTIVE
+            ).count(),
+
+            "maintenance": Maintenance.objects.count(),
+
+            "reviews": Review.objects.count(),
+
+            "average_rating": Review.objects.aggregate(
+                average=Avg("rating")
+            )["average"] or 0,
+
+            "order_revenue": Order.objects.filter(
+                status__in=[
+                    Order.Status.PAID,
+                    Order.Status.PROCESSING,
+                    Order.Status.COMPLETED,
+                ]
+            ).aggregate(
+                total=Sum("total_amount")
             )["total"] or 0,
         }
 
