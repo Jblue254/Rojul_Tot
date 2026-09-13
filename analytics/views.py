@@ -183,3 +183,30 @@ class RentalOrderStatisticsView(APIView):
         }
 
         return Response(data)
+class ProjectStatisticsView(APIView):
+    permission_classes = [IsAuthenticated, IsManagerOrAdmin]
+
+    def get(self, request):
+        data = {
+            "total": Project.objects.count(),
+            "planning": Project.objects.filter(
+                status=Project.Status.PLANNING
+            ).count(),
+            "active": Project.objects.filter(
+                status=Project.Status.ACTIVE
+            ).count(),
+            "on_hold": Project.objects.filter(
+                status=Project.Status.ON_HOLD
+            ).count(),
+            "completed": Project.objects.filter(
+                status=Project.Status.COMPLETED
+            ).count(),
+            "cancelled": Project.objects.filter(
+                status=Project.Status.CANCELLED
+            ).count(),
+            "total_budget": Project.objects.aggregate(
+                total=Sum("budget")
+            )["total"] or 0,
+        }
+
+        return Response(data)
