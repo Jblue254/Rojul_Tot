@@ -84,3 +84,33 @@ def get_queryset(self):
         )
 
     return queryset
+
+def get_queryset(self):
+    queryset = Maintenance.objects.all()
+
+    machine = self.request.query_params.get('machine')
+    status = self.request.query_params.get('status')
+    service_type = self.request.query_params.get('service_type')
+    service_date = self.request.query_params.get('service_date')
+
+    if machine:
+        queryset = queryset.filter(
+            machine_id=machine
+        )
+
+    if status:
+        queryset = queryset.filter(
+            status=status
+        )
+
+    if service_type:
+        queryset = queryset.filter(
+            service_type__icontains=service_type
+        )
+
+    if service_date:
+        queryset = queryset.filter(
+            service_date=service_date
+        )
+
+    return queryset
