@@ -150,3 +150,32 @@ class CartCheckoutView(generics.CreateAPIView):
             serializer.data,
             status=status.HTTP_201_CREATED
         )
+
+def get_queryset(self):
+    user = self.request.user
+
+    if user.role in ['MANAGER', 'ADMIN']:
+        queryset = Order.objects.all()
+    else:
+        queryset = Order.objects.filter(
+            customer=user
+        )
+
+    status = self.request.query_params.get('status')
+    min_amount = self.request.query_params.get('min_amount')
+    max_amount = self.request.query_params.get('max_amount')
+
+    if status:
+        queryset = queryset.filter(status=status)
+
+    if min_amount:
+        queryset = queryset.filter(
+            total_amount__gte=min_amount
+        )
+
+    if max_amount:
+        queryset = queryset.filter(
+            total_amount__lte=max_amount
+        )
+
+    return queryset
