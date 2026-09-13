@@ -114,3 +114,72 @@ class UserStatisticsView(APIView):
         }
 
         return Response(data)
+class RentalOrderStatisticsView(APIView):
+    permission_classes = [IsAuthenticated, IsManagerOrAdmin]
+
+    def get(self, request):
+        rental_revenue = Rental.objects.filter(
+            status__in=[
+                Rental.Status.APPROVED,
+                Rental.Status.ACTIVE,
+                Rental.Status.COMPLETED,
+            ]
+        ).aggregate(
+            total=Sum("total_price")
+        )["total"] or 0
+
+        order_revenue = Order.objects.filter(
+            status__in=[
+                Order.Status.PAID,
+                Order.Status.PROCESSING,
+                Order.Status.COMPLETED,
+            ]
+        ).aggregate(
+            total=Sum("total_amount")
+        )["total"] or 0
+
+        data = {
+            "rentals": {
+                "total": Rental.objects.count(),
+                "pending": Rental.objects.filter(
+                    status=Rental.Status.PENDING
+                ).count(),
+                "approved": Rental.objects.filter(
+                    status=Rental.Status.APPROVED
+                ).count(),
+                "active": Rental.objects.filter(
+                    status=Rental.Status.ACTIVE
+                ).count(),
+                "completed": Rental.objects.filter(
+                    status=Rental.Status.COMPLETED
+                ).count(),
+                "cancelled": Rental.objects.filter(
+                    status=Rental.Status.CANCELLED
+                ).count(),
+                "revenue": rental_revenue,
+            },
+
+            "orders": {
+                "total": Order.objects.count(),
+                "pending": Order.objects.filter(
+                    status=Order.Status.PENDING
+                ).count(),
+                "paid": Order.objects.filter(
+                    status=Order.Status.PAID
+                ).count(),
+                "processing": Order.objects.filter(
+                    status=Order.Status.PROCESSING
+                ).count(),
+                "completed": Order.objects.filter(
+                    status=Order.Status.COMPLETED
+                ).count(),
+                "cancelled": Order.objects.filter(
+                    status=Order.Status.CANCELLED
+                ).count(),
+                "revenue": order_revenue,
+            },
+
+            "combined_revenue": rental_revenue + order_revenue,
+        }
+
+        return Response(data)
