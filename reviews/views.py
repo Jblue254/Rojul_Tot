@@ -22,3 +22,27 @@ class ReviewDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def get_queryset(self):
         return Review.objects.all()
+
+def get_queryset(self):
+    queryset = Review.objects.all()
+
+    machine = self.request.query_params.get('machine')
+    drawing = self.request.query_params.get('drawing')
+    rating = self.request.query_params.get('rating')
+
+    if machine:
+        queryset = queryset.filter(
+            machine_id=machine
+        )
+
+    if drawing:
+        queryset = queryset.filter(
+            drawing_id=drawing
+        )
+
+    if rating:
+        queryset = queryset.filter(
+            rating=rating
+        )
+
+    return queryset
