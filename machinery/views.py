@@ -14,13 +14,29 @@ from accounts.permissions import IsEquipmentManagerOrAdmin
 class CategoryListCreateView(generics.ListCreateAPIView):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [IsAuthenticated()]
+
+        return [
+            IsAuthenticated(),
+            IsEquipmentManagerOrAdmin(),
+        ]
 
 
 class CategoryDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [IsAuthenticated()]
+
+        return [
+            IsAuthenticated(),
+            IsEquipmentManagerOrAdmin(),
+        ]
 
 
 class MachineListCreateView(generics.ListCreateAPIView):
