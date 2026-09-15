@@ -32,7 +32,9 @@ class Drawing(models.Model):
     category = models.ForeignKey(
         DrawingCategory,
         on_delete=models.CASCADE,
-        related_name='drawings'
+        related_name='drawings',
+        null=True,
+        blank=True
     )
 
     price = models.DecimalField(
