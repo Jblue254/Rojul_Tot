@@ -1,9 +1,41 @@
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
+
 from accounts.permissions import IsArchitecturalManagerOrAdmin
 
-from .models import Drawing
-from .serializers import DrawingSerializer
+from .models import Drawing, DrawingCategory
+from .serializers import (
+    DrawingSerializer,
+    DrawingCategorySerializer,
+)
+
+
+class DrawingCategoryListCreateView(generics.ListCreateAPIView):
+    queryset = DrawingCategory.objects.all().order_by('name')
+    serializer_class = DrawingCategorySerializer
+
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [IsAuthenticated()]
+
+        return [
+            IsAuthenticated(),
+            IsArchitecturalManagerOrAdmin(),
+        ]
+
+
+class DrawingCategoryDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = DrawingCategory.objects.all()
+    serializer_class = DrawingCategorySerializer
+
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [IsAuthenticated()]
+
+        return [
+            IsAuthenticated(),
+            IsArchitecturalManagerOrAdmin(),
+        ]
 
 
 class DrawingListCreateView(generics.ListCreateAPIView):
@@ -27,7 +59,7 @@ class DrawingListCreateView(generics.ListCreateAPIView):
 
         if category:
             queryset = queryset.filter(
-                category__icontains=category
+                category_id=category
             )
 
         if status:
@@ -45,7 +77,7 @@ class DrawingListCreateView(generics.ListCreateAPIView):
                 price__lte=max_price
             )
 
-        return queryset
+        return queryset.order_by('-created_at')
 
     def get_permissions(self):
         if self.request.method == 'GET':
@@ -53,7 +85,7 @@ class DrawingListCreateView(generics.ListCreateAPIView):
 
         return [
             IsAuthenticated(),
-            IsArchitecturalManagerOrAdmin()
+            IsArchitecturalManagerOrAdmin(),
         ]
 
 
@@ -67,5 +99,5 @@ class DrawingDetailView(generics.RetrieveUpdateDestroyAPIView):
 
         return [
             IsAuthenticated(),
-            IsArchitecturalManagerOrAdmin()
+            IsArchitecturalManagerOrAdmin(),
         ]
