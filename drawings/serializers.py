@@ -1,5 +1,11 @@
 from rest_framework import serializers
-from .models import Drawing
+from .models import Drawing, DrawingCategory
+
+
+class DrawingCategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DrawingCategory
+        fields = '__all__'
 
 
 class DrawingSerializer(serializers.ModelSerializer):
