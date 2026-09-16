@@ -26,8 +26,11 @@ SECRET_KEY = 'django-insecure-o==6y0i39+ct4k(w4!9*fbbc8^e)-ju((j=_f^t9j%y@3tug23
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = [
+    ".onrender.com",
+    "127.0.0.1",
+    "localhost",
+]
 
 # Application definition
 
@@ -149,3 +152,5 @@ REST_FRAMEWORK = {
 }
 
 AUTH_USER_MODEL = 'accounts.User'
+
+
