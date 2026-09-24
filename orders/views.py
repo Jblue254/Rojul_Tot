@@ -1,5 +1,7 @@
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework import status
 from .serializers import OrderSerializer
 from .models import Order, OrderItem, Cart, CartItem
 from .cart_serializers import CartSerializer, CartItemSerializer
@@ -13,9 +15,31 @@ class OrderListCreateView(generics.ListCreateAPIView):
         user = self.request.user
 
         if user.role in ['MANAGER', 'ADMIN']:
-            return Order.objects.all()
+            queryset = Order.objects.all()
+        else:
+            queryset = Order.objects.filter(
+                customer=user
+            )
 
-        return Order.objects.filter(customer=user)
+        # Filtering by query parameters
+        status_param = self.request.query_params.get('status')
+        min_amount = self.request.query_params.get('min_amount')
+        max_amount = self.request.query_params.get('max_amount')
+
+        if status_param:
+            queryset = queryset.filter(status=status_param)
+
+        if min_amount:
+            queryset = queryset.filter(
+                total_amount__gte=min_amount
+            )
+
+        if max_amount:
+            queryset = queryset.filter(
+                total_amount__lte=max_amount
+            )
+
+        return queryset
 
     def perform_create(self, serializer):
         serializer.save(customer=self.request.user)
@@ -79,9 +103,6 @@ class CartItemCreateView(generics.CreateAPIView):
 
         response_serializer = self.get_serializer(self.created_cart_item)
 
-        from rest_framework.response import Response
-        from rest_framework import status
-
         return Response(
             response_serializer.data,
             status=status.HTTP_201_CREATED
@@ -101,9 +122,6 @@ class CartCheckoutView(generics.CreateAPIView):
     permission_classes = [IsAuthenticated]
 
     def create(self, request, *args, **kwargs):
-        from rest_framework.response import Response
-        from rest_framework import status
-
         cart, created = Cart.objects.get_or_create(
             customer=request.user
         )
@@ -150,32 +168,3 @@ class CartCheckoutView(generics.CreateAPIView):
             serializer.data,
             status=status.HTTP_201_CREATED
         )
-
-def get_queryset(self):
-    user = self.request.user
-
-    if user.role in ['MANAGER', 'ADMIN']:
-        queryset = Order.objects.all()
-    else:
-        queryset = Order.objects.filter(
-            customer=user
-        )
-
-    status = self.request.query_params.get('status')
-    min_amount = self.request.query_params.get('min_amount')
-    max_amount = self.request.query_params.get('max_amount')
-
-    if status:
-        queryset = queryset.filter(status=status)
-
-    if min_amount:
-        queryset = queryset.filter(
-            total_amount__gte=min_amount
-        )
-
-    if max_amount:
-        queryset = queryset.filter(
-            total_amount__lte=max_amount
-        )
-
-    return queryset
