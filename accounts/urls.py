@@ -4,10 +4,10 @@ from .views import (
     RegisterView,
     LoginView,
     ProfileView,
-    ChangePasswordView,
     AdminOnlyView,
     AdminUserListCreateView,
     AdminUserDetailView,
+    ChangePasswordView,
 )
 
 urlpatterns = [
@@ -30,3 +30,8 @@ urlpatterns = [
         name='admin-user-detail'
     ),
 ]
+path(
+    "change-password/",
+    ChangePasswordView.as_view(),
+    name="change-password",
+),

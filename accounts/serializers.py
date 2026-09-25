@@ -85,3 +85,7 @@ class UserSerializer(serializers.ModelSerializer):
         instance.save()
 
         return instance
+
+class ChangePasswordSerializer(serializers.Serializer):
+    old_password = serializers.CharField()
+    new_password = serializers.CharField(min_length=8)
