@@ -5,7 +5,7 @@ from rest_framework.response import Response
 
 from accounts.permissions import IsManagerOrAdmin
 from notifications.models import Notification
-
+from machinery.models import Machine
 from .models import Rental
 from .serializers import RentalSerializer
 
@@ -63,10 +63,7 @@ class ApproveRentalView(APIView):
     permission_classes = [IsAuthenticated, IsManagerOrAdmin]
 
     def patch(self, request, pk):
-        try:
-            rental = Rental.objects.get(pk=pk)
-        except Rental.DoesNotExist:
-            return Response({"detail": "Rental not found."}, status=status.HTTP_404_NOT_FOUND)
+        rental = Rental.objects.get(pk=pk)
 
         rental.status = Rental.Status.APPROVED
         rental.save()
@@ -86,10 +83,7 @@ class RejectRentalView(APIView):
     permission_classes = [IsAuthenticated, IsManagerOrAdmin]
 
     def patch(self, request, pk):
-        try:
-            rental = Rental.objects.get(pk=pk)
-        except Rental.DoesNotExist:
-            return Response({"detail": "Rental not found."}, status=status.HTTP_404_NOT_FOUND)
+        rental = Rental.objects.get(pk=pk)
 
         rental.status = Rental.Status.REJECTED
         rental.save()
@@ -104,19 +98,46 @@ class RejectRentalView(APIView):
             "message": "Rental rejected"
         })
 
-
 class CompleteRentalView(APIView):
     permission_classes = [IsAuthenticated, IsManagerOrAdmin]
 
     def patch(self, request, pk):
-        try:
-            rental = Rental.objects.get(pk=pk)
-        except Rental.DoesNotExist:
-            return Response({"detail": "Rental not found."}, status=status.HTTP_404_NOT_FOUND)
+        rental = Rental.objects.get(pk=pk)
 
         rental.status = Rental.Status.COMPLETED
         rental.save()
 
+        rental.machine.status = Machine.Status.AVAILABLE
+        rental.machine.save()
+
+        Notification.objects.create(
+            recipient=rental.customer,
+            title="Rental Completed",
+            message=f"Rental for {rental.machine.name} has been completed."
+        )
+
         return Response({
             "message": "Rental completed"
+        })
+
+class ActivateRentalView(APIView):
+    permission_classes = [IsAuthenticated, IsManagerOrAdmin]
+
+    def patch(self, request, pk):
+        rental = Rental.objects.get(pk=pk)
+
+        rental.status = Rental.Status.ACTIVE
+        rental.save()
+
+        rental.machine.status = Machine.Status.RENTED
+        rental.machine.save()
+
+        Notification.objects.create(
+            recipient=rental.customer,
+            title="Rental Activated",
+            message=f"{rental.machine.name} has been handed over and rental is now active."
+        )
+
+        return Response({
+            "message": "Rental activated"
         })

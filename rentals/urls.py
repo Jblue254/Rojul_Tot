@@ -4,6 +4,7 @@ from .views import (
     RentalDetailView,
     ApproveRentalView,
     RejectRentalView,
+    ActivateRentalView,
     CompleteRentalView,
 )
 
@@ -37,4 +38,9 @@ urlpatterns = [
         CompleteRentalView.as_view(),
         name='rental-complete'
     ),
+    path(
+    '<int:pk>/activate/',
+    ActivateRentalView.as_view(),
+    name='rental-activate'
+),
 ]
