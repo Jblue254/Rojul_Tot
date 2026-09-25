@@ -5,8 +5,10 @@ from machinery.models import Machine
 
 class Rental(models.Model):
     class Status(models.TextChoices):
+
         PENDING = 'PENDING', 'Pending'
         APPROVED = 'APPROVED', 'Approved'
+        REJECTED = 'REJECTED', 'Rejected'
         ACTIVE = 'ACTIVE', 'Active'
         COMPLETED = 'COMPLETED', 'Completed'
         CANCELLED = 'CANCELLED', 'Cancelled'
