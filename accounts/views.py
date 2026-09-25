@@ -33,6 +33,8 @@ class LoginView(TokenObtainPairView):
     permission_classes = [AllowAny]
 
 
+from rest_framework.parsers import MultiPartParser, FormParser
+
 class ProfileView(generics.RetrieveUpdateAPIView):
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated]
@@ -41,11 +43,10 @@ class ProfileView(generics.RetrieveUpdateAPIView):
     def get_object(self):
         return self.request.user
 
-    def update(self, request, *args, **kwargs):
+    def patch(self, request, *args, **kwargs):
         print("FILES:", request.FILES)
-        return super().update(request, *args, **kwargs)
-
-
+        return super().patch(request, *args, **kwargs)
+    
 class ChangePasswordView(APIView):
     permission_classes = [IsAuthenticated]
 
