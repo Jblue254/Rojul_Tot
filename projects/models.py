@@ -229,3 +229,36 @@ class ProjectMilestone(models.Model):
 
     def __str__(self):
         return f"{self.project.name} - {self.title}"
+
+class Review(models.Model):
+
+    project = models.ForeignKey(
+        Project,
+        on_delete=models.CASCADE,
+        related_name='reviews'
+    )
+
+    customer = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE
+    )
+
+    rating = models.PositiveSmallIntegerField()
+
+    comment = models.TextField(
+        blank=True
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    def __str__(self):
+        return f"{self.project.name} - {self.rating}"
+
+def validate_rating(value):
+    
+    if value < 1 or value > 5:
+        raise ValidationError(
+            "Rating must be between 1 and 5"
+        )

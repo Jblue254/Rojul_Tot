@@ -7,6 +7,7 @@ from .serializers import (
     ProjectMilestoneSerializer,
     ProjectSerializer,
     ProjectMachineSerializer,
+    ReviewSerializer,
 )
 from .models import (
     Project,
@@ -14,6 +15,7 @@ from .models import (
     ProjectMember,
     ProjectExpense,
     ProjectMilestone,
+    Review,
 )
 
 class ProjectListCreateView(generics.ListCreateAPIView):
@@ -174,3 +176,25 @@ class ProjectMilestoneDetailView(
         return ProjectMilestone.objects.select_related(
             'project'
         )
+
+class ReviewListCreateView(
+    generics.ListCreateAPIView
+):
+    serializer_class = ReviewSerializer
+    permission_classes = [IsAuthenticated]
+
+    queryset = Review.objects.select_related(
+        "project",
+        "customer"
+    )
+
+class ReviewDetailView(
+    generics.RetrieveUpdateDestroyAPIView
+):
+    serializer_class = ReviewSerializer
+    permission_classes = [IsAuthenticated]
+
+    queryset = Review.objects.select_related(
+        "project",
+        "customer"
+    )

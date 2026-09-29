@@ -5,6 +5,7 @@ from .models import (
     ProjectMember,
     ProjectExpense,
     ProjectMilestone,
+    Review,
 )
 
 
@@ -115,3 +116,16 @@ class ProjectMilestoneSerializer(
     class Meta:
         model = ProjectMilestone
         fields = '__all__'
+
+class ReviewSerializer(
+    serializers.ModelSerializer
+):
+
+    project_name = serializers.CharField(
+        source="project.name",
+        read_only=True
+    )
+
+    class Meta:
+        model = Review
+        fields = "__all__"
