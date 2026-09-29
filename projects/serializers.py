@@ -4,6 +4,7 @@ from .models import (
     ProjectMachine,
     ProjectMember,
     ProjectExpense,
+    ProjectMilestone,
 )
 
 
@@ -101,4 +102,16 @@ class ProjectExpenseSerializer(
 
     class Meta:
         model = ProjectExpense
+        fields = '__all__'
+
+class ProjectMilestoneSerializer(
+    serializers.ModelSerializer
+):
+    project_name = serializers.CharField(
+        source='project.name',
+        read_only=True
+    )
+
+    class Meta:
+        model = ProjectMilestone
         fields = '__all__'

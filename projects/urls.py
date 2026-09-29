@@ -8,6 +8,8 @@ from .views import (
     ProjectMachineDetailView,
     ProjectMemberDetailView,
     ProjectMemberListCreateView,
+    ProjectMilestoneDetailView,
+    ProjectMilestoneListCreateView,
 )
 
 
@@ -56,6 +58,17 @@ path(
     'expenses/<int:pk>/',
     ProjectExpenseDetailView.as_view(),
     name='project-expense-detail'
+),
+path(
+    'milestones/',
+    ProjectMilestoneListCreateView.as_view(),
+    name='project-milestone-list-create'
+),
+
+path(
+    'milestones/<int:pk>/',
+    ProjectMilestoneDetailView.as_view(),
+    name='project-milestone-detail'
 ),
 
 ]
