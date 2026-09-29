@@ -1,5 +1,7 @@
 from django.db import models
 from django.conf import settings
+from django.core.exceptions import ValidationError
+from machinery.models import Machine
 
 
 class Project(models.Model):
@@ -49,3 +51,45 @@ class Project(models.Model):
 
     def __str__(self):
         return self.name
+
+    def clean(self):
+        super().clean()
+        if self.start_date and self.expected_end_date and self.expected_end_date < self.start_date:
+            raise ValidationError({
+                'expected_end_date': 'Expected end date cannot be earlier than the start date.'
+            })
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+
+class ProjectMachine(models.Model):
+    project = models.ForeignKey(
+        Project,
+        on_delete=models.CASCADE,
+        related_name='machine_assignments'
+    )
+
+    machine = models.ForeignKey(
+        Machine,
+        on_delete=models.CASCADE,
+        related_name='project_assignments'
+    )
+
+    quantity = models.PositiveIntegerField(default=1)
+
+    assigned_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['project', 'machine'],
+                name='unique_project_machine'
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.project.name} - {self.machine.name} ({self.quantity})"

@@ -1,8 +1,10 @@
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
-
-from .models import Project
-from .serializers import ProjectSerializer
+from .models import Project, ProjectMachine
+from .serializers import (
+    ProjectSerializer,
+    ProjectMachineSerializer,
+)
 
 
 class ProjectListCreateView(generics.ListCreateAPIView):
@@ -65,3 +67,16 @@ class ProjectDetailView(generics.RetrieveUpdateDestroyAPIView):
             return Project.objects.all()
 
         return Project.objects.filter(customer=user)
+
+class ProjectMachineListCreateView(
+    generics.ListCreateAPIView
+):
+    queryset = ProjectMachine.objects.all()
+    serializer_class = ProjectMachineSerializer
+
+
+class ProjectMachineDetailView(
+    generics.RetrieveUpdateDestroyAPIView
+):
+    queryset = ProjectMachine.objects.all()
+    serializer_class = ProjectMachineSerializer

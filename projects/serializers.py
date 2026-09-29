@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Project
+from .models import Project, ProjectMachine
 
 
 class ProjectSerializer(serializers.ModelSerializer):
@@ -53,3 +53,18 @@ class ProjectSerializer(serializers.ModelSerializer):
             })
 
         return data
+
+class ProjectMachineSerializer(serializers.ModelSerializer):
+    machine_name = serializers.CharField(
+        source='machine.name',
+        read_only=True
+    )
+
+    project_name = serializers.CharField(
+        source='project.name',
+        read_only=True
+    )
+
+    class Meta:
+        model = ProjectMachine
+        fields = '__all__'
