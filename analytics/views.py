@@ -8,10 +8,16 @@ from machinery.models import Machine, Maintenance
 from rentals.models import Rental
 from drawings.models import Drawing
 from orders.models import Order
-from projects.models import Project
 from reviews.models import Review
 from accounts.permissions import IsAdmin, IsManagerOrAdmin
 from accounts.models import User
+from projects.models import (
+    Project,
+    ProjectMember,
+    ProjectMachine,
+    ProjectExpense,
+    ProjectMilestone,
+)
 
 
 class DashboardStatisticsView(APIView):
@@ -188,30 +194,53 @@ class ProjectStatisticsView(APIView):
     permission_classes = [IsAuthenticated, IsManagerOrAdmin]
 
     def get(self, request):
+        user = request.user
+
+        # Calculate total expenses for projects managed by the user
+        total_expenses = (
+            ProjectExpense.objects.filter(
+                project__manager=user
+            ).aggregate(
+                total=Sum("amount")
+            )["total"]
+            or 0
+        )
+
+        # Fetch upcoming incomplete milestones for the user's projects
+        upcoming_milestones = list(
+            ProjectMilestone.objects.filter(
+                project__manager=user,
+                completed=False
+            )
+            .order_by("due_date")[:5]
+            .values("id", "title", "due_date", "completed", "project")
+        )
+
         data = {
-            "total": Project.objects.count(),
+            "total": Project.objects.filter(manager=user).count(),
             "planning": Project.objects.filter(
-                status=Project.Status.PLANNING
+                manager=user, status=Project.Status.PLANNING
             ).count(),
             "active": Project.objects.filter(
-                status=Project.Status.ACTIVE
+                manager=user, status=Project.Status.ACTIVE
             ).count(),
             "on_hold": Project.objects.filter(
-                status=Project.Status.ON_HOLD
+                manager=user, status=Project.Status.ON_HOLD
             ).count(),
             "completed": Project.objects.filter(
-                status=Project.Status.COMPLETED
+                manager=user, status=Project.Status.COMPLETED
             ).count(),
             "cancelled": Project.objects.filter(
-                status=Project.Status.CANCELLED
+                manager=user, status=Project.Status.CANCELLED
             ).count(),
-            "total_budget": Project.objects.aggregate(
+            "total_budget": Project.objects.filter(manager=user).aggregate(
                 total=Sum("budget")
             )["total"] or 0,
+            "total_expenses": total_expenses,
+            "upcoming_milestones": upcoming_milestones,
         }
 
         return Response(data)
-
 class AdminDashboardView(APIView):
     permission_classes = [IsAuthenticated, IsAdmin]
 
@@ -259,3 +288,77 @@ class AdminDashboardView(APIView):
         }
 
         return Response(data)
+
+class ManagerDashboardView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+
+        user = request.user
+
+        projects = Project.objects.filter(
+            manager=user
+        )
+
+        total_budget = (
+            projects.aggregate(
+                total=Sum("budget")
+            )["total"]
+            or 0
+        )
+
+        total_expenses = (
+            ProjectExpense.objects.filter(
+                project__manager=user
+            ).aggregate(
+                total=Sum("amount")
+            )["total"]
+            or 0
+        )
+
+        upcoming_milestones = (
+            ProjectMilestone.objects.filter(
+                project__manager=user,
+                completed=False
+            )
+            .order_by("due_date")[:5]
+        )
+
+        return Response({
+            "projects": projects.count(),
+
+            "active_projects": projects.filter(
+                status=Project.Status.ACTIVE
+            ).count(),
+
+            "completed_projects": projects.filter(
+                status=Project.Status.COMPLETED
+            ).count(),
+
+            "members": ProjectMember.objects.filter(
+                project__manager=user
+            ).count(),
+
+            "assigned_machines": ProjectMachine.objects.filter(
+                project__manager=user
+            ).count(),
+
+            "notifications": 0,
+
+            "total_budget": total_budget,
+
+            "total_expenses": total_expenses,
+
+            "remaining_budget":
+                total_budget - total_expenses,
+
+            "upcoming_milestones": [
+                {
+                    "id": milestone.id,
+                    "title": milestone.title,
+                    "project": milestone.project.name,
+                    "due_date": milestone.due_date,
+                }
+                for milestone in upcoming_milestones
+            ]
+        })
