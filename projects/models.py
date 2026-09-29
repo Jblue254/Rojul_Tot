@@ -68,7 +68,7 @@ class ProjectMachine(models.Model):
     project = models.ForeignKey(
         Project,
         on_delete=models.CASCADE,
-        related_name='machine_assignments'
+        related_name='assigned_machines'
     )
 
     machine = models.ForeignKey(
@@ -82,6 +82,17 @@ class ProjectMachine(models.Model):
     assigned_at = models.DateTimeField(
         auto_now_add=True
     )
+
+    def clean(self):
+        super().clean()
+        if self.machine and self.quantity > self.machine.quantity:
+            raise ValidationError({
+                'quantity': f'Only {self.machine.quantity} machine(s) available.'
+            })
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
 
     class Meta:
         constraints = [
