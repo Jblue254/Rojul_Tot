@@ -1,5 +1,7 @@
 from django.urls import path
 from .views import (
+    ProjectExpenseDetailView,
+    ProjectExpenseListCreateView,
     ProjectListCreateView,
     ProjectDetailView,
     ProjectMachineListCreateView,
@@ -43,6 +45,17 @@ path(
     'members/<int:pk>/',
     ProjectMemberDetailView.as_view(),
     name='project-member-detail'
+),
+path(
+    'expenses/',
+    ProjectExpenseListCreateView.as_view(),
+    name='project-expense-list-create'
+),
+
+path(
+    'expenses/<int:pk>/',
+    ProjectExpenseDetailView.as_view(),
+    name='project-expense-detail'
 ),
 
 ]

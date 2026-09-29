@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError
 from machinery.models import Machine
 
 
+
 class Project(models.Model):
     class Status(models.TextChoices):
         PLANNING = 'PLANNING', 'Planning'
@@ -65,9 +66,17 @@ class Project(models.Model):
 class ProjectMember(models.Model):
 
     ROLE_CHOICES = [
-        ('FOREMAN', 'Foreman'),
-        ('WORKER', 'Worker'),
-    ]
+    ('FOREMAN', 'Foreman'),
+    ('WORKER', 'Worker'),
+    ('ELECTRICIAN', 'Electrician'),
+    ('PLUMBER', 'Plumber'),
+    ('MASON', 'Mason'),
+    ('CARPENTER', 'Carpenter'),
+    ('PAINTER', 'Painter'),
+    ('WELDER', 'Welder'),
+]
+
+
 
     project = models.ForeignKey(
         Project,
@@ -138,3 +147,51 @@ class ProjectMachine(models.Model):
 
     def __str__(self):
         return f"{self.project.name} - {self.machine.name} ({self.quantity})"
+
+class ProjectExpense(models.Model):
+
+    CATEGORY_CHOICES = [
+        ('MATERIALS', 'Materials'),
+        ('LABOUR', 'Labour'),
+        ('MACHINERY', 'Machinery'),
+        ('TRANSPORT', 'Transport'),
+        ('FUEL', 'Fuel'),
+        ('OTHER', 'Other'),
+    ]
+
+    project = models.ForeignKey(
+        Project,
+        on_delete=models.CASCADE,
+        related_name='expenses'
+    )
+
+    title = models.CharField(
+        max_length=200
+    )
+
+    category = models.CharField(
+        max_length=30,
+        choices=CATEGORY_CHOICES
+    )
+
+    amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2
+    )
+
+    notes = models.TextField(
+        blank=True
+    )
+
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    def __str__(self):
+        return f"{self.project.name} - {self.title}"

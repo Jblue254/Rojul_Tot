@@ -2,6 +2,7 @@ from rest_framework import generics
 from accounts.permissions import IsManagerOrAdmin
 from rest_framework.permissions import IsAuthenticated
 from .serializers import (
+    ProjectExpenseSerializer,
     ProjectMemberSerializer,
     ProjectSerializer,
     ProjectMachineSerializer,
@@ -10,6 +11,7 @@ from .models import (
     Project,
     ProjectMachine,
     ProjectMember,
+    ProjectExpense,
 )
 
 class ProjectListCreateView(generics.ListCreateAPIView):
@@ -116,4 +118,34 @@ class ProjectMemberDetailView(
     def get_queryset(self):
         return ProjectMember.objects.select_related(
             'project'
+        )
+
+class ProjectExpenseListCreateView(
+    generics.ListCreateAPIView
+):
+    serializer_class = ProjectExpenseSerializer
+    permission_classes = [IsManagerOrAdmin]
+
+    def get_queryset(self):
+        return ProjectExpense.objects.select_related(
+            'project',
+            'created_by'
+        )
+
+    def perform_create(self, serializer):
+        serializer.save(
+            created_by=self.request.user
+        )
+
+
+class ProjectExpenseDetailView(
+    generics.RetrieveUpdateDestroyAPIView
+):
+    serializer_class = ProjectExpenseSerializer
+    permission_classes = [IsManagerOrAdmin]
+
+    def get_queryset(self):
+        return ProjectExpense.objects.select_related(
+            'project',
+            'created_by'
         )
