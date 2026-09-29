@@ -62,6 +62,39 @@ class Project(models.Model):
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)
+class ProjectMember(models.Model):
+
+    ROLE_CHOICES = [
+        ('FOREMAN', 'Foreman'),
+        ('WORKER', 'Worker'),
+    ]
+
+    project = models.ForeignKey(
+        Project,
+        on_delete=models.CASCADE,
+        related_name='members'
+    )
+
+    full_name = models.CharField(
+        max_length=150
+    )
+
+    phone = models.CharField(
+        max_length=30,
+        blank=True
+    )
+
+    role = models.CharField(
+        max_length=20,
+        choices=ROLE_CHOICES
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    def __str__(self):
+        return f"{self.full_name} ({self.role})"
 
 
 class ProjectMachine(models.Model):

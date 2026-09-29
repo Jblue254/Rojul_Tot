@@ -4,6 +4,8 @@ from .views import (
     ProjectDetailView,
     ProjectMachineListCreateView,
     ProjectMachineDetailView,
+    ProjectMemberDetailView,
+    ProjectMemberListCreateView,
 )
 
 
@@ -31,5 +33,16 @@ urlpatterns = [
         ProjectMachineDetailView.as_view(),
         name='project-machine-detail'
     ),
+    path(
+    'members/',
+    ProjectMemberListCreateView.as_view(),
+    name='project-member-list-create'
+),
+
+path(
+    'members/<int:pk>/',
+    ProjectMemberDetailView.as_view(),
+    name='project-member-detail'
+),
 
 ]
