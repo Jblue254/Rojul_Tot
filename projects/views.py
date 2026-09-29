@@ -1,12 +1,11 @@
 from rest_framework import generics
-from rest_framework.permissions import IsAuthenticated
+from accounts.permissions import IsManagerOrAdmin
 from .models import Project, ProjectMachine
+from rest_framework.permissions import IsAuthenticated
 from .serializers import (
     ProjectSerializer,
     ProjectMachineSerializer,
 )
-
-
 class ProjectListCreateView(generics.ListCreateAPIView):
     serializer_class = ProjectSerializer
     permission_classes = [IsAuthenticated]
@@ -71,12 +70,23 @@ class ProjectDetailView(generics.RetrieveUpdateDestroyAPIView):
 class ProjectMachineListCreateView(
     generics.ListCreateAPIView
 ):
-    queryset = ProjectMachine.objects.all()
     serializer_class = ProjectMachineSerializer
+    permission_classes = [IsManagerOrAdmin]
 
+    def get_queryset(self):
+        return ProjectMachine.objects.select_related(
+            'project',
+            'machine'
+        )
 
 class ProjectMachineDetailView(
     generics.RetrieveUpdateDestroyAPIView
 ):
-    queryset = ProjectMachine.objects.all()
     serializer_class = ProjectMachineSerializer
+    permission_classes = [IsManagerOrAdmin]
+
+    def get_queryset(self):
+        return ProjectMachine.objects.select_related(
+            'project',
+            'machine'
+        )
