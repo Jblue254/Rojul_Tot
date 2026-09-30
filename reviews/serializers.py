@@ -3,27 +3,40 @@ from .models import Review
 
 
 class ReviewSerializer(serializers.ModelSerializer):
+
+    machine_name = serializers.CharField(
+        source="machine.name",
+        read_only=True
+    )
+
+    drawing_title = serializers.CharField(
+        source="drawing.title",
+        read_only=True
+    )
+
     class Meta:
         model = Review
         fields = [
-            'id',
-            'customer',
-            'machine',
-            'drawing',
-            'rating',
-            'comment',
-            'created_at',
+            "id",
+            "customer",
+            "machine",
+            "machine_name",
+            "drawing",
+            "drawing_title",
+            "rating",
+            "comment",
+            "created_at",
         ]
 
         read_only_fields = [
-            'id',
-            'customer',
-            'created_at',
+            "id",
+            "customer",
+            "created_at",
         ]
 
     def validate(self, data):
-        machine = data.get('machine')
-        drawing = data.get('drawing')
+        machine = data.get("machine")
+        drawing = data.get("drawing")
 
         if not machine and not drawing:
             raise serializers.ValidationError(

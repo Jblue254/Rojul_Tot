@@ -362,3 +362,55 @@ class ManagerDashboardView(APIView):
                 for milestone in upcoming_milestones
             ]
         })
+
+class EquipmentManagerDashboardView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+
+        rental_revenue = (
+            Rental.objects.filter(
+                status__in=[
+                    Rental.Status.APPROVED,
+                    Rental.Status.ACTIVE,
+                    Rental.Status.COMPLETED,
+                ]
+            ).aggregate(
+                total=Sum("total_price")
+            )["total"]
+            or 0
+        )
+
+        data = {
+            "total_machines": Machine.objects.count(),
+
+            "available_machines": Machine.objects.filter(
+                status=Machine.Status.AVAILABLE
+            ).count(),
+
+            "rented_machines": Machine.objects.filter(
+                status=Machine.Status.RENTED
+            ).count(),
+
+            "maintenance_machines": Machine.objects.filter(
+                status=Machine.Status.MAINTENANCE
+            ).count(),
+
+            "active_rentals": Rental.objects.filter(
+                status=Rental.Status.ACTIVE
+            ).count(),
+
+            "pending_rentals": Rental.objects.filter(
+                status=Rental.Status.PENDING
+            ).count(),
+
+            "completed_rentals": Rental.objects.filter(
+                status=Rental.Status.COMPLETED
+            ).count(),
+
+            "rental_revenue": rental_revenue,
+
+            "maintenance_records": Maintenance.objects.count(),
+        }
+
+        return Response(data)
