@@ -6,10 +6,8 @@ from rest_framework.response import Response
 
 from machinery.models import Machine, Maintenance
 from rentals.models import Rental
-from drawings.models import Drawing
 from orders.models import Order
 from reviews.models import Review
-from accounts.permissions import IsAdmin, IsManagerOrAdmin
 from accounts.models import User
 from projects.models import (
     Project,
@@ -17,6 +15,16 @@ from projects.models import (
     ProjectMachine,
     ProjectExpense,
     ProjectMilestone,
+)
+from drawings.models import (
+    Drawing,
+    DrawingCategory,
+)
+
+from accounts.permissions import (
+    IsAdmin,
+    IsManagerOrAdmin,
+    IsArchitecturalManagerOrAdmin,
 )
 
 
@@ -414,3 +422,92 @@ class EquipmentManagerDashboardView(APIView):
         }
 
         return Response(data)
+class ArchitecturalDashboardView(APIView):
+    permission_classes = [
+        IsAuthenticated,
+        IsArchitecturalManagerOrAdmin
+    ]
+
+    def get(self, request):
+
+        order_revenue = (
+            Order.objects.filter(
+                status__in=[
+                    Order.Status.PAID,
+                    Order.Status.PROCESSING,
+                    Order.Status.COMPLETED,
+                ]
+            ).aggregate(
+                total=Sum("total_amount")
+            )["total"]
+            or 0
+        )
+
+        average_rating = (
+            Review.objects.aggregate(
+                average=Avg("rating")
+            )["average"]
+            or 0
+        )
+
+        recent_orders = (
+            Order.objects
+            .select_related("customer")
+            .order_by("-created_at")[:5]
+        )
+
+        return Response({
+            "total_drawings":
+                Drawing.objects.count(),
+
+            "available_drawings":
+                Drawing.objects.filter(
+                    status=Drawing.Status.AVAILABLE
+                ).count(),
+
+            "sold_out_drawings":
+                Drawing.objects.filter(
+                    status=Drawing.Status.SOLD_OUT
+                ).count(),
+
+            "inactive_drawings":
+                Drawing.objects.filter(
+                    status=Drawing.Status.INACTIVE
+                ).count(),
+
+            "categories":
+                DrawingCategory.objects.count(),
+
+            "orders":
+                Order.objects.count(),
+
+            "completed_orders":
+                Order.objects.filter(
+                    status=Order.Status.COMPLETED
+                ).count(),
+
+            "pending_orders":
+                Order.objects.filter(
+                    status=Order.Status.PENDING
+                ).count(),
+
+            "revenue":
+                order_revenue,
+
+            "reviews":
+                Review.objects.count(),
+
+            "average_rating":
+                round(float(average_rating), 2),
+
+            "recent_orders": [
+                {
+                    "id": order.id,
+                    "customer": order.customer.email,
+                    "status": order.status,
+                    "total_amount": order.total_amount,
+                    "created_at": order.created_at,
+                }
+                for order in recent_orders
+            ]
+        })
