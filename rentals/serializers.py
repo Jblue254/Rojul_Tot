@@ -86,3 +86,13 @@ class RentalSerializer(serializers.ModelSerializer):
         validated_data['total_price'] = total_price
 
         return Rental.objects.create(**validated_data)
+
+customer_name = serializers.CharField(
+    source="customer.full_name",
+    read_only=True
+)
+
+machine_name = serializers.CharField(
+    source="machine.name",
+    read_only=True
+)
