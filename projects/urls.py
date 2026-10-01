@@ -1,5 +1,6 @@
 from django.urls import path
 from .views import (
+    FeaturedProjectListView,
     ProjectExpenseDetailView,
     ProjectExpenseListCreateView,
     ProjectListCreateView,
@@ -10,6 +11,7 @@ from .views import (
     ProjectMemberListCreateView,
     ProjectMilestoneDetailView,
     ProjectMilestoneListCreateView,
+    PublicProjectListView,
     ReviewDetailView,
     ReviewListCreateView,
 )
@@ -80,6 +82,17 @@ path(
 path(
     "reviews/<int:pk>/",
     ReviewDetailView.as_view()
+),
+path(
+    "public/",
+        PublicProjectListView.as_view(),
+    name="public-projects"
+),
+
+path(
+    "featured/",
+        FeaturedProjectListView.as_view(),
+    name="featured-projects"
 ),
 
 ]

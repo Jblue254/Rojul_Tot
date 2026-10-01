@@ -1,28 +1,47 @@
 from rest_framework import generics
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 
 from accounts.permissions import IsManagerOrAdmin
-
 from notifications.models import Notification
 from notifications.utils import create_notification
 
-from .serializers import (
-    ProjectExpenseSerializer,
-    ProjectMemberSerializer,
-    ProjectMilestoneSerializer,
-    ProjectSerializer,
-    ProjectMachineSerializer,
-    ReviewSerializer,
-)
-
 from .models import (
     Project,
+    ProjectExpense,
     ProjectMachine,
     ProjectMember,
-    ProjectExpense,
     ProjectMilestone,
     Review,
 )
+from .serializers import (
+    ProjectExpenseSerializer,
+    ProjectMachineSerializer,
+    ProjectMemberSerializer,
+    ProjectMilestoneSerializer,
+    ProjectSerializer,
+    ReviewSerializer,
+)
+
+
+class PublicProjectListView(generics.ListAPIView):
+    serializer_class = ProjectSerializer
+    permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        return Project.objects.filter(
+            status=Project.Status.COMPLETED
+        ).order_by("-created_at")
+
+
+class FeaturedProjectListView(generics.ListAPIView):
+    serializer_class = ProjectSerializer
+    permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        return Project.objects.filter(
+            featured=True,
+            status=Project.Status.COMPLETED
+        ).order_by("-created_at")
 
 
 class ProjectListCreateView(generics.ListCreateAPIView):
@@ -44,36 +63,20 @@ class ProjectListCreateView(generics.ListCreateAPIView):
         max_budget = self.request.query_params.get("max_budget")
 
         if search:
-            queryset = queryset.filter(
-                name__icontains=search
-            )
-
+            queryset = queryset.filter(name__icontains=search)
         if status:
-            queryset = queryset.filter(
-                status=status
-            )
-
+            queryset = queryset.filter(status=status)
         if location:
-            queryset = queryset.filter(
-                location__icontains=location
-            )
-
+            queryset = queryset.filter(location__icontains=location)
         if min_budget:
-            queryset = queryset.filter(
-                budget__gte=min_budget
-            )
-
+            queryset = queryset.filter(budget__gte=min_budget)
         if max_budget:
-            queryset = queryset.filter(
-                budget__lte=max_budget
-            )
+            queryset = queryset.filter(budget__lte=max_budget)
 
         return queryset.order_by("-created_at")
 
     def perform_create(self, serializer):
-        project = serializer.save(
-            customer=self.request.user
-        )
+        project = serializer.save(customer=self.request.user)
 
         create_notification(
             recipient=project.customer,
@@ -93,19 +96,13 @@ class ProjectDetailView(generics.RetrieveUpdateDestroyAPIView):
         if user.role in ["MANAGER", "ADMIN"]:
             return Project.objects.all()
 
-        return Project.objects.filter(
-            customer=user
-        )
+        return Project.objects.filter(customer=user)
 
     def perform_update(self, serializer):
         old_status = serializer.instance.status
-
         project = serializer.save()
 
-        if (
-            old_status != project.status
-            and project.status == "COMPLETED"
-        ):
+        if old_status != project.status and project.status == "COMPLETED":
             create_notification(
                 recipient=project.customer,
                 title="Project Completed",
@@ -114,92 +111,53 @@ class ProjectDetailView(generics.RetrieveUpdateDestroyAPIView):
             )
 
 
-class ProjectMachineListCreateView(
-    generics.ListCreateAPIView
-):
+class ProjectMachineListCreateView(generics.ListCreateAPIView):
     serializer_class = ProjectMachineSerializer
     permission_classes = [IsManagerOrAdmin]
 
     def get_queryset(self):
-        return ProjectMachine.objects.select_related(
-            "project",
-            "machine",
-        )
+        return ProjectMachine.objects.select_related("project", "machine")
 
 
-class ProjectMachineDetailView(
-    generics.RetrieveUpdateDestroyAPIView
-):
+class ProjectMachineDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = ProjectMachineSerializer
     permission_classes = [IsManagerOrAdmin]
 
     def get_queryset(self):
-        return ProjectMachine.objects.select_related(
-            "project",
-            "machine",
-        )
+        return ProjectMachine.objects.select_related("project", "machine")
 
 
-class ProjectMemberListCreateView(
-    generics.ListCreateAPIView
-):
+class ProjectMemberListCreateView(generics.ListCreateAPIView):
     serializer_class = ProjectMemberSerializer
     permission_classes = [IsManagerOrAdmin]
 
     def get_queryset(self):
-        return ProjectMember.objects.select_related(
-            "project"
-        )
+        return ProjectMember.objects.select_related("project")
 
     def perform_create(self, serializer):
-        member = serializer.save()
-
-        create_notification(
-            recipient=member.user,
-            title="Project Assignment",
-            message=f"You have been assigned to project '{member.project.name}'.",
-            notification_type=Notification.NotificationType.PROJECT,
-        )
+        serializer.save()
 
 
-class ProjectMemberDetailView(
-    generics.RetrieveUpdateDestroyAPIView
-):
+class ProjectMemberDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = ProjectMemberSerializer
     permission_classes = [IsManagerOrAdmin]
 
     def get_queryset(self):
-        return ProjectMember.objects.select_related(
-            "project"
-        )
+        return ProjectMember.objects.select_related("project")
 
     def perform_destroy(self, instance):
-        create_notification(
-            recipient=instance.user,
-            title="Project Assignment Removed",
-            message=f"You have been removed from project '{instance.project.name}'.",
-            notification_type=Notification.NotificationType.PROJECT,
-        )
-
         instance.delete()
 
 
-class ProjectExpenseListCreateView(
-    generics.ListCreateAPIView
-):
+class ProjectExpenseListCreateView(generics.ListCreateAPIView):
     serializer_class = ProjectExpenseSerializer
     permission_classes = [IsManagerOrAdmin]
 
     def get_queryset(self):
-        return ProjectExpense.objects.select_related(
-            "project",
-            "created_by",
-        )
+        return ProjectExpense.objects.select_related("project", "created_by")
 
     def perform_create(self, serializer):
-        expense = serializer.save(
-            created_by=self.request.user
-        )
+        expense = serializer.save(created_by=self.request.user)
 
         create_notification(
             recipient=expense.project.customer,
@@ -209,29 +167,20 @@ class ProjectExpenseListCreateView(
         )
 
 
-class ProjectExpenseDetailView(
-    generics.RetrieveUpdateDestroyAPIView
-):
+class ProjectExpenseDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = ProjectExpenseSerializer
     permission_classes = [IsManagerOrAdmin]
 
     def get_queryset(self):
-        return ProjectExpense.objects.select_related(
-            "project",
-            "created_by",
-        )
+        return ProjectExpense.objects.select_related("project", "created_by")
 
 
-class ProjectMilestoneListCreateView(
-    generics.ListCreateAPIView
-):
+class ProjectMilestoneListCreateView(generics.ListCreateAPIView):
     serializer_class = ProjectMilestoneSerializer
     permission_classes = [IsManagerOrAdmin]
 
     def get_queryset(self):
-        return ProjectMilestone.objects.select_related(
-            "project"
-        )
+        return ProjectMilestone.objects.select_related("project")
 
     def perform_create(self, serializer):
         milestone = serializer.save()
@@ -244,26 +193,18 @@ class ProjectMilestoneListCreateView(
         )
 
 
-class ProjectMilestoneDetailView(
-    generics.RetrieveUpdateDestroyAPIView
-):
+class ProjectMilestoneDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = ProjectMilestoneSerializer
     permission_classes = [IsManagerOrAdmin]
 
     def get_queryset(self):
-        return ProjectMilestone.objects.select_related(
-            "project"
-        )
+        return ProjectMilestone.objects.select_related("project")
 
     def perform_update(self, serializer):
-        old_status = serializer.instance.status
-
+        old_completed = serializer.instance.completed
         milestone = serializer.save()
 
-        if (
-            old_status != milestone.status
-            and milestone.status == "COMPLETED"
-        ):
+        if not old_completed and milestone.completed:
             create_notification(
                 recipient=milestone.project.customer,
                 title="Milestone Completed",
@@ -272,21 +213,14 @@ class ProjectMilestoneDetailView(
             )
 
 
-class ReviewListCreateView(
-    generics.ListCreateAPIView
-):
+class ReviewListCreateView(generics.ListCreateAPIView):
     serializer_class = ReviewSerializer
     permission_classes = [IsAuthenticated]
 
-    queryset = Review.objects.select_related(
-        "project",
-        "customer",
-    )
+    queryset = Review.objects.select_related("project", "customer")
 
     def perform_create(self, serializer):
-        review = serializer.save(
-            customer=self.request.user
-        )
+        review = serializer.save(customer=self.request.user)
 
         create_notification(
             recipient=review.project.customer,
@@ -296,13 +230,8 @@ class ReviewListCreateView(
         )
 
 
-class ReviewDetailView(
-    generics.RetrieveUpdateDestroyAPIView
-):
+class ReviewDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = ReviewSerializer
     permission_classes = [IsAuthenticated]
 
-    queryset = Review.objects.select_related(
-        "project",
-        "customer",
-    )
+    queryset = Review.objects.select_related("project", "customer")
