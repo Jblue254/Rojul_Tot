@@ -1,9 +1,6 @@
 from rest_framework import generics
-from rest_framework.permissions import IsAuthenticated
-
 from notifications.models import Notification
 from notifications.utils import create_notification
-
 from .models import Category, Machine, Maintenance
 from .serializers import (
     CategorySerializer,
@@ -12,9 +9,18 @@ from .serializers import (
 )
 
 from accounts.permissions import IsEquipmentManagerOrAdmin
+from rest_framework.permissions import (
+    IsAuthenticated,
+    AllowAny,
+)
+class PublicMachineListView(generics.ListAPIView):
+    serializer_class = MachineSerializer
+    permission_classes = [AllowAny]
 
-
-
+    def get_queryset(self):
+        return Machine.objects.filter(
+            status=Machine.Status.AVAILABLE
+        ).order_by("-created_at")
 
 class CategoryListCreateView(generics.ListCreateAPIView):
     queryset = Category.objects.all()

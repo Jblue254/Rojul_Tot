@@ -4,7 +4,7 @@ from .views import (CategoryListCreateView,
     MachineListCreateView,
     MachineDetailView,
     MaintenanceListCreateView,
-    MaintenanceDetailView,
+    MaintenanceDetailView, PublicMachineListView,
 )
 
 urlpatterns = [
@@ -14,4 +14,5 @@ urlpatterns = [
     path('machines/<int:pk>/', MachineDetailView.as_view(), name='machine-detail'),
     path('maintenances/', MaintenanceListCreateView.as_view(), name='maintenance-list-create'),
     path('maintenances/<int:pk>/', MaintenanceDetailView.as_view(), name='maintenance-detail'),
+    path("public/", PublicMachineListView.as_view(),name="public-machines"),
 ]
