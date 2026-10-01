@@ -57,18 +57,27 @@ class OrderDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def perform_update(self, serializer):
         old_status = serializer.instance.status
-
         order = serializer.save()
 
         if old_status != order.status:
+            first_item = order.items.first()
+            order_name = (
+                first_item.drawing.title
+                if first_item
+                else f"Order #{order.id}"
+            )
 
             create_notification(
                 recipient=order.customer,
                 title="Order Status Updated",
-                message=f"Your order #{order.id} status changed to {order.status}.",
+                message=(
+                    f"Your order for '{order_name}' "
+                    f"has been updated to {order.status}."
+                ),
                 notification_type=Notification.NotificationType.ORDER
             )
-            
+
+
 class CartView(generics.RetrieveAPIView):
     serializer_class = CartSerializer
     permission_classes = [IsAuthenticated]
@@ -161,6 +170,7 @@ class CartCheckoutView(generics.CreateAPIView):
 
             order.total_amount = total_amount
             order.save()
+            
             create_notification(
                 recipient=request.user,
                 title="Order Created",
