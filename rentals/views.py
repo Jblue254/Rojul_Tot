@@ -8,6 +8,7 @@ from notifications.models import Notification
 from machinery.models import Machine
 from .models import Rental
 from .serializers import RentalSerializer
+from notifications.utils import create_notification
 
 
 class RentalListCreateView(generics.ListCreateAPIView):
@@ -68,11 +69,13 @@ class ApproveRentalView(APIView):
         rental.status = Rental.Status.APPROVED
         rental.save()
 
-        Notification.objects.create(
+        create_notification(
             recipient=rental.customer,
             title="Rental Approved",
-            message=f"Your rental request for {rental.machine.name} has been approved."
+            message=f"Your rental request for {rental.machine.name} has been approved.",
+            notification_type=Notification.NotificationType.RENTAL
         )
+
 
         return Response({
             "message": "Rental approved"
@@ -88,11 +91,14 @@ class RejectRentalView(APIView):
         rental.status = Rental.Status.REJECTED
         rental.save()
 
-        Notification.objects.create(
+        create_notification(
             recipient=rental.customer,
             title="Rental Rejected",
-            message=f"Your rental request for {rental.machine.name} has been rejected."
+            message=f"Your rental request for {rental.machine.name} has been rejected.",
+            notification_type=Notification.NotificationType.RENTAL
         )
+
+        
 
         return Response({
             "message": "Rental rejected"
@@ -110,11 +116,14 @@ class CompleteRentalView(APIView):
         rental.machine.status = Machine.Status.AVAILABLE
         rental.machine.save()
 
-        Notification.objects.create(
+        create_notification(
             recipient=rental.customer,
             title="Rental Completed",
-            message=f"Rental for {rental.machine.name} has been completed."
+            message=f"Rental for {rental.machine.name} has been completed.",
+            notification_type=Notification.NotificationType.RENTAL
         )
+
+       
 
         return Response({
             "message": "Rental completed"
@@ -132,10 +141,11 @@ class ActivateRentalView(APIView):
         rental.machine.status = Machine.Status.RENTED
         rental.machine.save()
 
-        Notification.objects.create(
+        create_notification(
             recipient=rental.customer,
             title="Rental Activated",
-            message=f"{rental.machine.name} has been handed over and rental is now active."
+            message=f"{rental.machine.name} has been handed over and rental is now active.",
+            notification_type=Notification.NotificationType.RENTAL
         )
 
         return Response({

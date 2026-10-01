@@ -1,5 +1,8 @@
 from rest_framework import generics
-from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
+from rest_framework.permissions import IsAuthenticated
+
+from notifications.models import Notification
+from notifications.utils import create_notification
 
 from .models import Category, Machine, Maintenance
 from .serializers import (
@@ -9,6 +12,8 @@ from .serializers import (
 )
 
 from accounts.permissions import IsEquipmentManagerOrAdmin
+
+
 
 
 class CategoryListCreateView(generics.ListCreateAPIView):
@@ -119,9 +124,26 @@ class MaintenanceListCreateView(generics.ListCreateAPIView):
             )
 
         if service_date:
-            queryset = queryset.filter(service_date=service_date)
+            queryset = queryset.filter(
+                service_date=service_date
+            )
 
         return queryset
+
+    def perform_create(self, serializer):
+        maintenance = serializer.save()
+
+        maintenance.machine.status = Machine.Status.MAINTENANCE
+        maintenance.machine.save()
+
+        create_notification(
+            recipient=self.request.user,
+            title="Maintenance Scheduled",
+            message=f"Maintenance for {maintenance.machine.name} has been scheduled.",
+            notification_type=Notification.NotificationType.MAINTENANCE
+        )
+
+ 
 
     def get_permissions(self):
         if self.request.method == 'GET':
@@ -132,12 +154,34 @@ class MaintenanceListCreateView(generics.ListCreateAPIView):
             IsEquipmentManagerOrAdmin(),
         ]
 
-
-class MaintenanceDetailView(generics.RetrieveUpdateDestroyAPIView):
+class MaintenanceDetailView(
+    generics.RetrieveUpdateDestroyAPIView
+):
     serializer_class = MaintenanceSerializer
 
     def get_queryset(self):
         return Maintenance.objects.all()
+
+    def perform_update(self, serializer):
+        old_status = serializer.instance.status
+
+        maintenance = serializer.save()
+
+        if (
+            old_status != maintenance.status
+            and maintenance.status == Maintenance.Status.COMPLETED
+        ):
+            maintenance.machine.status = Machine.Status.AVAILABLE
+            maintenance.machine.save()
+
+            create_notification(
+                recipient=self.request.user,
+                title="Maintenance Completed",
+                message=f"Maintenance for {maintenance.machine.name} has been completed.",
+                notification_type=Notification.NotificationType.MAINTENANCE
+            )
+
+
 
     def get_permissions(self):
         if self.request.method == 'GET':

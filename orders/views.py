@@ -8,6 +8,8 @@ from drawings.models import Drawing
 from .cart_serializers import CartItemSerializer, CartSerializer
 from .models import Cart, CartItem, Order, OrderItem
 from .serializers import OrderSerializer
+from notifications.utils import create_notification
+from notifications.models import Notification
 
 
 class OrderListCreateView(generics.ListCreateAPIView):
@@ -146,6 +148,12 @@ class CartCheckoutView(generics.CreateAPIView):
 
             order.total_amount = total_amount
             order.save()
+            create_notification(
+                recipient=request.user,
+                title="Order Created",
+                message=f"Order #{order.id} has been placed successfully.",
+                notification_type=Notification.NotificationType.ORDER
+            )
 
             # Clear the cart after a successful checkout
             cart.items.all().delete()
