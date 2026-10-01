@@ -55,7 +55,20 @@ class OrderDetailView(generics.RetrieveUpdateDestroyAPIView):
 
         return Order.objects.filter(customer=user)
 
+    def perform_update(self, serializer):
+        old_status = serializer.instance.status
 
+        order = serializer.save()
+
+        if old_status != order.status:
+
+            create_notification(
+                recipient=order.customer,
+                title="Order Status Updated",
+                message=f"Your order #{order.id} status changed to {order.status}.",
+                notification_type=Notification.NotificationType.ORDER
+            )
+            
 class CartView(generics.RetrieveAPIView):
     serializer_class = CartSerializer
     permission_classes = [IsAuthenticated]
