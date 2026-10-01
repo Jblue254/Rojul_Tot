@@ -50,7 +50,6 @@ class OrderSerializer(serializers.ModelSerializer):
             'id',
             'customer',
             'customer_email',
-            'status',
             'total_amount',
             'created_at',
             'updated_at',
