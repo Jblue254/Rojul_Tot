@@ -9,7 +9,20 @@ from .serializers import (
     DrawingCategorySerializer,
 )
 
+from rest_framework.permissions import AllowAny
+from rest_framework import generics
 
+
+
+class PublicDrawingListView(generics.ListAPIView):
+    serializer_class = DrawingSerializer
+    permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        return Drawing.objects.filter(
+            status=Drawing.Status.AVAILABLE
+        ).order_by("-created_at")
+    
 class DrawingCategoryListCreateView(generics.ListCreateAPIView):
     queryset = DrawingCategory.objects.all().order_by('name')
     serializer_class = DrawingCategorySerializer

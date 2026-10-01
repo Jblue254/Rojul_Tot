@@ -42,6 +42,10 @@ class Drawing(models.Model):
         decimal_places=2
     )
 
+    featured = models.BooleanField(
+        default=False
+    )
+
     preview_image = models.ImageField(
         upload_to='drawings/previews/',
         blank=True,

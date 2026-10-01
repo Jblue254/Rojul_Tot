@@ -13,6 +13,7 @@ class ProjectAdmin(admin.ModelAdmin):
         "customer",
         "manager",
         "status",
+        "featured",
         "budget",
         "start_date",
         "expected_end_date",
@@ -25,7 +26,22 @@ class ProjectAdmin(admin.ModelAdmin):
 
     list_filter = (
         "status",
+        "featured",
         "start_date",
+    )
+
+    fields = (
+        "name",
+        "description",
+        "image",
+        "featured",
+        "customer",
+        "manager",
+        "location",
+        "budget",
+        "start_date",
+        "expected_end_date",
+        "status",
     )
 
 

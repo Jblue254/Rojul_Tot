@@ -9,22 +9,29 @@ class DrawingCategorySerializer(serializers.ModelSerializer):
 
 
 class DrawingSerializer(serializers.ModelSerializer):
+    category_name = serializers.CharField(
+        source="category.name",
+        read_only=True
+    )
+
     class Meta:
         model = Drawing
         fields = [
-            'id',
-            'title',
-            'description',
-            'category',
-            'price',
-            'preview_image',
-            'drawing_file',
-            'status',
-            'created_at',
-            'updated_at',
+            "id",
+            "title",
+            "description",
+            "category",
+            "category_name",
+            "price",
+            "preview_image",
+            "drawing_file",
+            "status",
+            "created_at",
+            "updated_at",
         ]
+
         read_only_fields = [
-            'id',
-            'created_at',
-            'updated_at',
+            "id",
+            "created_at",
+            "updated_at",
         ]
