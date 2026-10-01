@@ -5,6 +5,7 @@ from .models import Notification
 from .serializers import NotificationSerializer
 
 
+
 class NotificationListView(generics.ListAPIView):
     serializer_class = NotificationSerializer
     permission_classes = [IsAuthenticated]
@@ -27,3 +28,14 @@ class NotificationDetailView(generics.RetrieveUpdateDestroyAPIView):
 class NotificationCreateView(generics.CreateAPIView):
     serializer_class = NotificationSerializer
     permission_classes = [IsAuthenticated, IsManagerOrAdmin]
+
+class AdminNotificationListView(generics.ListAPIView):
+    serializer_class = NotificationSerializer
+    permission_classes = [
+        IsAuthenticated,
+        IsManagerOrAdmin
+    ]
+
+    queryset = Notification.objects.select_related(
+        "recipient"
+    ).order_by("-created_at")
