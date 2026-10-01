@@ -23,21 +23,23 @@ class ProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
         fields = [
-            'id',
-            'name',
-            'description',
-            'customer',
-            'customer_email',
-            'manager',
-            'manager_email',
-            'location',
-            'budget',
-            'start_date',
-            'expected_end_date',
-            'status',
-            'created_at',
-            'updated_at',
-        ]
+    'id',
+    'name',
+    'description',
+    'image',
+    'featured',
+    'customer',
+    'customer_email',
+    'manager',
+    'manager_email',
+    'location',
+    'budget',
+    'start_date',
+    'expected_end_date',
+    'status',
+    'created_at',
+    'updated_at',
+]
 
         read_only_fields = [
             'id',
@@ -47,6 +49,8 @@ class ProjectSerializer(serializers.ModelSerializer):
             'created_at',
             'updated_at',
         ]
+            
+        
 
     def validate(self, data):
         if data['expected_end_date'] <= data['start_date']:

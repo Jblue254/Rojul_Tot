@@ -15,6 +15,7 @@ from projects.models import (
     ProjectMachine,
     ProjectExpense,
     ProjectMilestone,
+    ProjectMachine,
 )
 from drawings.models import (
     Drawing,
@@ -126,6 +127,11 @@ class UserStatisticsView(APIView):
             "active_users": User.objects.filter(
                 is_active=True
             ).count(),
+            "completed_projects": Project.objects.filter(
+    status=Project.Status.COMPLETED
+).count(),
+
+"assigned_machines": ProjectMachine.objects.count(),
         }
 
         return Response(data)

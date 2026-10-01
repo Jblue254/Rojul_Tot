@@ -1,8 +1,7 @@
-from django.db import models
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.db import models
 from machinery.models import Machine
-
 
 
 class Project(models.Model):
@@ -15,6 +14,16 @@ class Project(models.Model):
 
     name = models.CharField(max_length=200)
     description = models.TextField(blank=True)
+    
+    image = models.ImageField(
+        upload_to="projects/",
+        blank=True,
+        null=True
+    )
+
+    featured = models.BooleanField(
+        default=False
+    )
 
     customer = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -63,20 +72,19 @@ class Project(models.Model):
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)
+
+
 class ProjectMember(models.Model):
-
     ROLE_CHOICES = [
-    ('FOREMAN', 'Foreman'),
-    ('WORKER', 'Worker'),
-    ('ELECTRICIAN', 'Electrician'),
-    ('PLUMBER', 'Plumber'),
-    ('MASON', 'Mason'),
-    ('CARPENTER', 'Carpenter'),
-    ('PAINTER', 'Painter'),
-    ('WELDER', 'Welder'),
-]
-
-
+        ('FOREMAN', 'Foreman'),
+        ('WORKER', 'Worker'),
+        ('ELECTRICIAN', 'Electrician'),
+        ('PLUMBER', 'Plumber'),
+        ('MASON', 'Mason'),
+        ('CARPENTER', 'Carpenter'),
+        ('PAINTER', 'Painter'),
+        ('WELDER', 'Welder'),
+    ]
 
     project = models.ForeignKey(
         Project,
@@ -94,10 +102,10 @@ class ProjectMember(models.Model):
     )
 
     role = models.CharField(
-    max_length=20,
-    choices=ROLE_CHOICES,
-    default='WORKER'
-)
+        max_length=20,
+        choices=ROLE_CHOICES,
+        default='WORKER'
+    )
 
     created_at = models.DateTimeField(
         auto_now_add=True
@@ -148,8 +156,8 @@ class ProjectMachine(models.Model):
     def __str__(self):
         return f"{self.project.name} - {self.machine.name} ({self.quantity})"
 
-class ProjectExpense(models.Model):
 
+class ProjectExpense(models.Model):
     CATEGORY_CHOICES = [
         ('MATERIALS', 'Materials'),
         ('LABOUR', 'Labour'),
@@ -196,8 +204,8 @@ class ProjectExpense(models.Model):
     def __str__(self):
         return f"{self.project.name} - {self.title}"
 
-class ProjectMilestone(models.Model):
 
+class ProjectMilestone(models.Model):
     project = models.ForeignKey(
         Project,
         on_delete=models.CASCADE,
@@ -230,8 +238,15 @@ class ProjectMilestone(models.Model):
     def __str__(self):
         return f"{self.project.name} - {self.title}"
 
-class Review(models.Model):
 
+def validate_rating(value):
+    if value < 1 or value > 5:
+        raise ValidationError(
+            "Rating must be between 1 and 5"
+        )
+
+
+class Review(models.Model):
     project = models.ForeignKey(
         Project,
         on_delete=models.CASCADE,
@@ -243,7 +258,9 @@ class Review(models.Model):
         on_delete=models.CASCADE
     )
 
-    rating = models.PositiveSmallIntegerField()
+    rating = models.PositiveSmallIntegerField(
+        validators=[validate_rating]
+    )
 
     comment = models.TextField(
         blank=True
@@ -254,11 +271,4 @@ class Review(models.Model):
     )
 
     def __str__(self):
-        return f"{self.project.name} - {self.rating}"
-
-def validate_rating(value):
-    
-    if value < 1 or value > 5:
-        raise ValidationError(
-            "Rating must be between 1 and 5"
-        )
+        return f"{self.project.name} - {self.rating} Stars"
