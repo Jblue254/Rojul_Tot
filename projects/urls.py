@@ -2,6 +2,7 @@ from django.urls import path
 
 from .views import (
     FeaturedProjectListView,
+    PublicProjectDetailView,
     PublicProjectListView,
     ProjectListCreateView,
     ProjectDetailView,
@@ -108,4 +109,9 @@ urlpatterns = [
         ReviewDetailView.as_view(),
         name="review-detail",
     ),
+    path(
+    "public/<int:pk>/",
+    PublicProjectDetailView.as_view(),
+    name="public-project-detail",
+),
 ]

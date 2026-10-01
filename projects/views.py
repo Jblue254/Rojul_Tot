@@ -23,6 +23,17 @@ from .serializers import (
 )
 
 
+
+class PublicProjectDetailView(
+    generics.RetrieveAPIView
+):
+    serializer_class = ProjectSerializer
+    permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        return Project.objects.all()
+
+
 class PublicProjectListView(generics.ListAPIView):
     serializer_class = ProjectSerializer
     permission_classes = [AllowAny]
