@@ -5,6 +5,7 @@ from .views import (
     DrawingCategoryDetailView,
     DrawingListCreateView,
     DrawingDetailView,
+    PublicDrawingDetailView,
     PublicDrawingListView,
 )
 
@@ -38,4 +39,5 @@ urlpatterns = [
         DrawingDetailView.as_view(),
         name="drawing-detail",
     ),
+    path("public/<int:pk>/", PublicDrawingDetailView.as_view(), name="public-drawing-detail"),
 ]

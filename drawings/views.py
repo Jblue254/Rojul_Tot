@@ -22,6 +22,11 @@ class PublicDrawingListView(generics.ListAPIView):
         return Drawing.objects.filter(
             status=Drawing.Status.AVAILABLE
         ).order_by("-created_at")
+
+class PublicDrawingDetailView(generics.RetrieveAPIView):
+    queryset = Drawing.objects.all()
+    serializer_class = DrawingSerializer
+    permission_classes = [AllowAny]
     
 class DrawingCategoryListCreateView(generics.ListCreateAPIView):
     queryset = DrawingCategory.objects.all().order_by('name')
