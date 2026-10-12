@@ -188,3 +188,4 @@ CORS_ALLOWED_ORIGINS = [
     "https://rojul-tot-frontend.vercel.app",
 ]
 
+SUPABASE_URL = os.getenv("SUPABASE_URL", "").rstrip("/")

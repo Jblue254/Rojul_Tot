@@ -1,5 +1,7 @@
 from rest_framework import serializers
 from .models import Category, Machine, Maintenance
+from django.conf import settings
+import os
 
 
 
@@ -15,6 +17,10 @@ class CategorySerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at']
 
 
+
+
+
+
 class MachineSerializer(serializers.ModelSerializer):
     category_name = serializers.CharField(
         source='category.name',
@@ -22,42 +28,30 @@ class MachineSerializer(serializers.ModelSerializer):
     )
     image = serializers.SerializerMethodField()
 
+    class Meta:
+        model = Machine
+        fields = [
+            'id', 'name', 'category', 'category_name', 'description',
+            'price_per_day', 'quantity', 'location', 'status',
+            'image', 'created_at', 'updated_at',
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
     def get_image(self, obj):
         if not obj.image:
             return None
 
-        request = self.context.get('request')
-        url = obj.image.url
+        filename = os.path.basename(obj.image.name)
+        base_url = getattr(settings, 'SUPABASE_URL', '').rstrip('/')
 
-        if request:
-            url = request.build_absolute_uri(url)
+        if not base_url:
+            return None
 
-        if url.startswith('http://'):
-            url = 'https://' + url[len('http://'):]
+        return (
+            f"{base_url}/storage/v1/object/public/"
+            f"machinery-images/{filename}"
+        )
 
-        return url
-
-    class Meta:
-        model = Machine
-        fields = [
-            'id',
-            'name',
-            'category',
-            'category_name',
-            'description',
-            'price_per_day',
-            'quantity',
-            'location',
-            'status',
-            'image',
-            'created_at',
-            'updated_at',
-        ]
-        read_only_fields = [
-            'id',
-            'created_at',
-            'updated_at',
-        ]
 
 class MaintenanceSerializer(serializers.ModelSerializer):
     machine_name = serializers.CharField(
