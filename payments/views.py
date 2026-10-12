@@ -243,12 +243,26 @@ class DarajaCallbackView(APIView):
             payment.status = Payment.Status.SUCCESS
             payment.save()
 
+
             # Only a successful drawing payment changes order status.
             # Rental approval and activation remain separate staff actions.
+           # Update drawing order status after successful payment.
             if payment.order_id:
                 order = payment.order
+
                 if order.status == Order.Status.PENDING:
                     order.status = Order.Status.PAID
                     order.save(update_fields=["status", "updated_at"])
+
+            # Update rental status after successful payment.
+            elif payment.rental_id:
+                rental = payment.rental
+
+                if rental.status in (
+                    Rental.Status.PENDING,
+                    Rental.Status.APPROVED,
+                ):
+                    rental.status = Rental.Status.PAID
+                    rental.save(update_fields=["status", "updated_at"])
 
         return Response({"ResultCode": 0, "ResultDesc": "Accepted"})
