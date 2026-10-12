@@ -32,10 +32,7 @@ DEBUG = os.getenv("DEBUG", "False") == "True"
 
 ALLOWED_HOSTS = [
     ".onrender.com",
-    "127.0.0.1",
-    "localhost",
-    "web-production-c75a0.up.railway.app",
-    "rojul-tot.onrender.com",
+    ".up.railway.app",
     "localhost",
     "127.0.0.1",
 ]
