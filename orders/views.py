@@ -10,7 +10,45 @@ from .models import Cart, CartItem, Order, OrderItem
 from .serializers import OrderSerializer
 from notifications.utils import create_notification
 from notifications.models import Notification
+# orders/views.py
+import os
 
+from django.http import FileResponse
+from django.shortcuts import get_object_or_404
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.views import APIView
+from rest_framework.exceptions import NotFound
+
+from .models import OrderItem
+
+
+class DrawingDownloadView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, item_id):
+        item = get_object_or_404(
+            OrderItem.objects.select_related(
+                "order", "drawing"
+            ),
+            id=item_id,
+            order__customer=request.user,
+            order__status__in=[
+                "PAID",
+                "PROCESSING",
+                "COMPLETED",
+            ],
+        )
+
+        if not item.drawing.drawing_file:
+            raise NotFound("The original drawing file is not available.")
+
+        filename = os.path.basename(item.drawing.drawing_file.name)
+
+        return FileResponse(
+            item.drawing.drawing_file.open("rb"),
+            as_attachment=True,
+            filename=filename,
+        )
 
 class OrderListCreateView(generics.ListCreateAPIView):
     serializer_class = OrderSerializer
