@@ -20,6 +20,22 @@ class MachineSerializer(serializers.ModelSerializer):
         source='category.name',
         read_only=True
     )
+    image = serializers.SerializerMethodField()
+
+    def get_image(self, obj):
+        if not obj.image:
+            return None
+
+        request = self.context.get('request')
+        url = obj.image.url
+
+        if request:
+            url = request.build_absolute_uri(url)
+
+        if url.startswith('http://'):
+            url = 'https://' + url[len('http://'):]
+
+        return url
 
     class Meta:
         model = Machine
