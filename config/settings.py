@@ -37,6 +37,9 @@ ALLOWED_HOSTS = [
     "127.0.0.1",
 ]
 
+CSRF_TRUSTED_ORIGINS = [
+    "https://rojul-tot-frontend.vercel.app",
+]
 
 DARAJA_ENV = os.getenv("DARAJA_ENV", "sandbox")
 DARAJA_CONSUMER_KEY = os.getenv("DARAJA_CONSUMER_KEY", "")
@@ -178,5 +181,7 @@ REST_FRAMEWORK = {
 
 AUTH_USER_MODEL = 'accounts.User'
 
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOWED_ORIGINS = [
+    "https://rojul-tot-frontend.vercel.app",
+]
 
