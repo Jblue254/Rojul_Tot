@@ -36,6 +36,13 @@ ALLOWED_HOSTS = [
     "localhost",
 ]
 
+
+DARAJA_ENV = os.getenv("DARAJA_ENV", "sandbox")
+DARAJA_CONSUMER_KEY = os.getenv("DARAJA_CONSUMER_KEY", "")
+DARAJA_CONSUMER_SECRET = os.getenv("DARAJA_CONSUMER_SECRET", "")
+DARAJA_SHORTCODE = os.getenv("DARAJA_SHORTCODE", "174379")
+DARAJA_PASSKEY = os.getenv("DARAJA_PASSKEY", "")
+DARAJA_CALLBACK_URL = os.getenv("DARAJA_CALLBACK_URL", "")
 # Application definition
 
 INSTALLED_APPS = [
@@ -57,6 +64,7 @@ INSTALLED_APPS = [
     'reviews',
     'analytics',
     'contacts',
+    'payments',
 
 ]
 
