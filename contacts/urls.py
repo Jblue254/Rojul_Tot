@@ -8,10 +8,10 @@ from .views import (
 
 urlpatterns = [
     path(
-        "public/",
-        ContactMessageCreateView.as_view(),
-        name="contact-create",
-    ),
+    "submit/",
+    ContactMessageCreateView.as_view(),
+    name="contact-create",
+),
 
     path(
         "",
