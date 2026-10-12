@@ -1,5 +1,5 @@
 from rest_framework import generics
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated, SAFE_METHODS
 
 from accounts.permissions import IsManagerOrAdmin
 from notifications.models import Notification
@@ -23,10 +23,7 @@ from .serializers import (
 )
 
 
-
-class PublicProjectDetailView(
-    generics.RetrieveAPIView
-):
+class PublicProjectDetailView(generics.RetrieveAPIView):
     serializer_class = ProjectSerializer
     permission_classes = [AllowAny]
 
@@ -188,34 +185,58 @@ class ProjectExpenseDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 class ProjectMilestoneListCreateView(generics.ListCreateAPIView):
     serializer_class = ProjectMilestoneSerializer
-    permission_classes = [IsManagerOrAdmin]
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return ProjectMilestone.objects.select_related("project")
+        queryset = ProjectMilestone.objects.select_related("project")
+        user = self.request.user
+
+        if user.role in ["MANAGER", "ADMIN"]:
+            return queryset
+
+        return queryset.filter(project__customer=user)
+
+    def get_permissions(self):
+        if self.request.method not in SAFE_METHODS:
+            return [IsManagerOrAdmin()]
+        return [IsAuthenticated()]
 
     def perform_create(self, serializer):
         milestone = serializer.save()
-
         create_notification(
             recipient=milestone.project.customer,
             title="New Project Milestone",
-            message=f"Milestone '{milestone.title}' was added to project '{milestone.project.name}'.",
+            message=(
+                f"Milestone '{milestone.title}' was added to "
+                f"project '{milestone.project.name}'."
+            ),
             notification_type=Notification.NotificationType.PROJECT,
         )
 
 
 class ProjectMilestoneDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = ProjectMilestoneSerializer
-    permission_classes = [IsManagerOrAdmin]
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return ProjectMilestone.objects.select_related("project")
+        queryset = ProjectMilestone.objects.select_related("project")
+        user = self.request.user
+
+        if user.role in ["MANAGER", "ADMIN"]:
+            return queryset
+
+        return queryset.filter(project__customer=user)
+
+    def get_permissions(self):
+        if self.request.method not in SAFE_METHODS:
+            return [IsManagerOrAdmin()]
+        return [IsAuthenticated()]
 
     def perform_update(self, serializer):
-        old_completed = serializer.instance.completed
+        was_completed = serializer.instance.completed
         milestone = serializer.save()
 
-        if not old_completed and milestone.completed:
+        if not was_completed and milestone.completed:
             create_notification(
                 recipient=milestone.project.customer,
                 title="Milestone Completed",
@@ -228,21 +249,31 @@ class ReviewListCreateView(generics.ListCreateAPIView):
     serializer_class = ReviewSerializer
     permission_classes = [IsAuthenticated]
 
-    queryset = Review.objects.select_related("project", "customer")
+    def get_queryset(self):
+        queryset = Review.objects.select_related("project", "customer")
+        user = self.request.user
+
+        if user.role in ["MANAGER", "ADMIN"]:
+            return queryset
+
+        return queryset.filter(project__customer=user)
 
     def perform_create(self, serializer):
-        review = serializer.save(customer=self.request.user)
-
-        create_notification(
-            recipient=review.project.customer,
-            title="New Review",
-            message=f"You received a {review.rating}/5 review for project '{review.project.name}'.",
-            notification_type=Notification.NotificationType.PROJECT,
-        )
+        serializer.save(customer=self.request.user)
 
 
 class ReviewDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = ReviewSerializer
     permission_classes = [IsAuthenticated]
 
-    queryset = Review.objects.select_related("project", "customer")
+    def get_queryset(self):
+        queryset = Review.objects.select_related("project", "customer")
+        user = self.request.user
+
+        if user.role in ["MANAGER", "ADMIN"]:
+            return queryset
+
+        return queryset.filter(
+            project__customer=user,
+            customer=user,
+        )
