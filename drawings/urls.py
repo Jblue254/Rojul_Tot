@@ -7,6 +7,7 @@ from .views import (
     DrawingDetailView,
     PublicDrawingDetailView,
     PublicDrawingListView,
+    PurchasedDrawingDownloadView,
 )
 
 urlpatterns = [
@@ -40,4 +41,9 @@ urlpatterns = [
         name="drawing-detail",
     ),
     path("public/<int:pk>/", PublicDrawingDetailView.as_view(), name="public-drawing-detail"),
+    path(
+    "purchased/<int:pk>/download/",
+    PurchasedDrawingDownloadView.as_view(),
+    name="purchased-drawing-download",
+),
 ]
