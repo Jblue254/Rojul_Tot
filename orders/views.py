@@ -1,8 +1,16 @@
+import os
+
 from django.db import transaction
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
+
 from rest_framework import generics, status
+from rest_framework.exceptions import NotFound, PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
+from config.supabase_storage import download_private_file
 from drawings.models import Drawing
 
 from .cart_serializers import CartItemSerializer, CartSerializer
@@ -10,16 +18,6 @@ from .models import Cart, CartItem, Order, OrderItem
 from .serializers import OrderSerializer
 from notifications.utils import create_notification
 from notifications.models import Notification
-# orders/views.py
-import os
-
-from django.http import FileResponse
-from django.shortcuts import get_object_or_404
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.views import APIView
-from rest_framework.exceptions import NotFound
-
-from .models import OrderItem
 
 
 class DrawingDownloadView(APIView):
@@ -27,28 +25,52 @@ class DrawingDownloadView(APIView):
 
     def get(self, request, item_id):
         item = get_object_or_404(
-            OrderItem.objects.select_related(
-                "order", "drawing"
-            ),
-            id=item_id,
+            OrderItem.objects.select_related("order", "drawing"),
+            pk=item_id,
             order__customer=request.user,
-            order__status__in=[
-                "PAID",
-                "PROCESSING",
-                "COMPLETED",
-            ],
         )
 
-        if not item.drawing.drawing_file:
+        # Only allow downloads for paid or fulfilled orders
+        if item.order.status not in [
+            "PAID",
+            "PROCESSING",
+            "COMPLETED",
+        ]:
+            raise PermissionDenied(
+                "Your order must be paid before downloading this drawing."
+            )
+
+        drawing = item.drawing
+
+        if not drawing or not drawing.drawing_file:
             raise NotFound("The original drawing file is not available.")
 
-        filename = os.path.basename(item.drawing.drawing_file.name)
+        try:
+            file_path = drawing.drawing_file.name
+            content = download_private_file("drawing-files", file_path)
 
-        return FileResponse(
-            item.drawing.drawing_file.open("rb"),
-            as_attachment=True,
-            filename=filename,
+            if not content:
+                raise NotFound("The drawing file is empty or unavailable.")
+        except NotFound:
+            raise
+        except Exception:
+            return Response(
+                {"detail": "Unable to retrieve the drawing file from storage."},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+
+        filename = os.path.basename(file_path) or f"drawing-{drawing.pk}.pdf"
+
+        response = HttpResponse(
+            content,
+            content_type="application/pdf",
         )
+        response["Content-Disposition"] = (
+            f'attachment; filename="{filename}"'
+        )
+        response["Cache-Control"] = "private, no-store"
+        return response
+
 
 class OrderListCreateView(generics.ListCreateAPIView):
     serializer_class = OrderSerializer
@@ -193,32 +215,6 @@ class CartCheckoutView(generics.CreateAPIView):
                 drawing = cart_item.drawing
                 quantity = cart_item.quantity
 
-                unit_price = drawing.price
-                subtotal = unit_price * quantity
-
-                OrderItem.objects.create(
-                    order=order,
-                    drawing=drawing,
-                    quantity=quantity,
-                    unit_price=unit_price,
-                    subtotal=subtotal,
-                )
-
-                total_amount += subtotal
-
-            order.total_amount = total_amount
-            order.save()
-            
-            create_notification(
-                recipient=request.user,
-                title="Order Created",
-                message=f"Order #{order.id} has been placed successfully.",
-                notification_type=Notification.NotificationType.ORDER
-            )
-
-            # Clear the cart after a successful checkout
-            cart.items.all().delete()
-
-            serializer = self.get_serializer(order)
-
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+                unit_price = drawing.price if drawing else 0
+                total_price = unit_price * quantity
+                total_amount += total_price
