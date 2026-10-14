@@ -75,13 +75,11 @@ SUPABASE_SERVICE_ROLE_KEY=replace-with-your-service-role-key
 
 Use the base Supabase URL only; do not append `/rest/v1/` or `/storage/v1/`. Add any other variables required by `config/settings.py`.
 
-**Security:** Never commit `.env` or expose `SUPABASE_SERVICE_ROLE_KEY` to the frontend. Configure production secrets in Railway.
-
 ### 4. Check and migrate
 
 ```bash
 python manage.py check
-python manage.py makemigrations --check --dry-run
+python manage.py makemigrations 
 python manage.py migrate
 ```
 
@@ -92,8 +90,6 @@ Confirm the configured database before running migrations. Do not reset or drop 
 ```bash
 python manage.py runserver
 ```
-
-Default local URL: `http://127.0.0.1:8000/`.
 
 ## Supabase Storage
 
@@ -107,19 +103,13 @@ Default local URL: `http://127.0.0.1:8000/`.
 
 Paths used during setup include `machinery/<filename>`, `projects/<filename>`, `drawings/previews/<filename>`, `drawings/files/<filename>`, and `profiles/<filename>`. Filenames and folders must match exactly, including spaces, underscores, and capitalization.
 
-Public object URL format:
-```text
-https://YOUR_PROJECT_REF.supabase.co/storage/v1/object/public/BUCKET_NAME/OBJECT_PATH
-```
 
-The `drawing-files` bucket is private. Public drawing responses intentionally return `drawing_file: null`; purchased documents should use the authenticated backend download flow.
 
 ## Confirmed public endpoints
 
 - `GET /api/machinery/public/` — public machinery records and image URLs.
 - `GET /api/drawings/public/` — public drawing records and preview URLs.
 
-A `401 Unauthorized` response from a protected endpoint without a bearer token is expected.
 
 ## Railway deployment
 
@@ -136,14 +126,6 @@ A `401 Unauthorized` response from a protected endpoint without a bearer token i
 - **401 response:** The endpoint may require authentication.
 - **500 response:** Inspect Railway logs for a traceback and verify environment variables.
 - **Malformed Supabase URL:** Use the base project URL only.
-
-## Before committing
-
-- Keep `.env`, secrets, virtual environments, and `__pycache__` out of Git.
-- Run `python manage.py check` and relevant tests.
-- Do not reset production database data during routine deployment.
-
----
 
 ## Author and maintainer
 
