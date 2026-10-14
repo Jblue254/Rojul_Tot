@@ -2,7 +2,6 @@ import os
 
 from django.db import transaction
 from django.http import HttpResponse
-from django.shortcuts import get_object_or_404
 
 from rest_framework import generics, status
 from rest_framework.exceptions import NotFound, PermissionDenied
@@ -24,13 +23,19 @@ class DrawingDownloadView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, item_id):
-        item = get_object_or_404(
-            OrderItem.objects.select_related("order", "drawing"),
+        # Find the order item belonging to the logged-in customer.
+        item = OrderItem.objects.select_related(
+            "order", "drawing"
+        ).filter(
             pk=item_id,
             order__customer=request.user,
-        )
+        ).first()
 
-        # Only allow downloads for paid or fulfilled orders
+        if item is None:
+            raise NotFound(
+                f"Order item {item_id} was not found for your account."
+            )
+
         if item.order.status not in [
             "PAID",
             "PROCESSING",
@@ -43,7 +48,9 @@ class DrawingDownloadView(APIView):
         drawing = item.drawing
 
         if not drawing or not drawing.drawing_file:
-            raise NotFound("The original drawing file is not available.")
+            raise NotFound(
+                "This order item has no associated drawing file."
+            )
 
         try:
             file_path = drawing.drawing_file.name
@@ -215,6 +222,32 @@ class CartCheckoutView(generics.CreateAPIView):
                 drawing = cart_item.drawing
                 quantity = cart_item.quantity
 
-                unit_price = drawing.price if drawing else 0
-                total_price = unit_price * quantity
-                total_amount += total_price
+                unit_price = drawing.price
+                subtotal = unit_price * quantity
+
+                OrderItem.objects.create(
+                    order=order,
+                    drawing=drawing,
+                    quantity=quantity,
+                    unit_price=unit_price,
+                    subtotal=subtotal,
+                )
+
+                total_amount += subtotal
+
+            order.total_amount = total_amount
+            order.save()
+            
+            create_notification(
+                recipient=request.user,
+                title="Order Created",
+                message=f"Order #{order.id} has been placed successfully.",
+                notification_type=Notification.NotificationType.ORDER
+            )
+
+            # Clear the cart after a successful checkout
+            cart.items.all().delete()
+
+            serializer = self.get_serializer(order)
+
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
