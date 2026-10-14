@@ -177,41 +177,43 @@ class ProjectMilestoneSerializer(
 
 
 class ReviewSerializer(serializers.ModelSerializer):
+    customer_name = serializers.SerializerMethodField()
     project_name = serializers.CharField(
         source="project.name",
         read_only=True,
     )
-    customer = serializers.PrimaryKeyRelatedField(read_only=True)
 
     class Meta:
         model = Review
         fields = [
             "id",
+            "customer",
+            "customer_name",
             "project",
             "project_name",
-            "customer",
             "rating",
             "comment",
             "created_at",
         ]
-        read_only_fields = ["id", "customer", "created_at"]
+        read_only_fields = [
+            "id",
+            "customer",
+            "customer_name",
+            "created_at",
+        ]
 
-    def validate_project(self, project):
-        request = self.context.get("request")
+    def get_customer_name(self, obj):
+        customer = obj.customer
 
-        if request and project.customer_id != request.user.id:
-            raise serializers.ValidationError(
-                "You can only review your own projects."
-            )
+        full_name = (
+            f"{customer.first_name} {customer.last_name}"
+        ).strip()
 
-        return project
+        if full_name:
+            return full_name
 
-
-    project_name = serializers.CharField(
-        source="project.name",
-        read_only=True
-    )
-
-    class Meta:
-        model = Review
-        fields = "__all__"
+        return (
+            getattr(customer, "username", None)
+            or getattr(customer, "email", None)
+            or f"Customer #{customer.pk}"
+        )
