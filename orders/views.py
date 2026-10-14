@@ -1,3 +1,4 @@
+import logging
 import os
 
 from django.db import transaction
@@ -17,6 +18,8 @@ from .models import Cart, CartItem, Order, OrderItem
 from .serializers import OrderSerializer
 from notifications.utils import create_notification
 from notifications.models import Notification
+
+logger = logging.getLogger(__name__)
 
 
 class DrawingDownloadView(APIView):
@@ -54,13 +57,28 @@ class DrawingDownloadView(APIView):
 
         try:
             file_path = drawing.drawing_file.name
-            content = download_private_file("drawing-files", file_path)
+            logger.info(
+                "Downloading drawing: item_id=%s drawing_id=%s file_path=%s",
+                item_id,
+                drawing.pk,
+                file_path,
+            )
+            content = download_private_file(
+                "drawing-files",
+                file_path,
+            )
 
             if not content:
-                raise NotFound("The drawing file is empty or unavailable.")
+                raise NotFound(
+                    "The drawing file is empty or unavailable."
+                )
         except NotFound:
             raise
         except Exception:
+            logger.exception(
+                "Supabase download failed for order item %s",
+                item_id,
+            )
             return Response(
                 {"detail": "Unable to retrieve the drawing file from storage."},
                 status=status.HTTP_502_BAD_GATEWAY,
